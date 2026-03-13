@@ -15,6 +15,20 @@
   --text: #f0f0f0; --text2: #aaa; --text3: #666;
   --radius: 10px; --radius-sm: 6px; --radius-lg: 14px;
 }
+body.light {
+  --orange-light: #fff0e6;
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --surface2: #efefef;
+  --surface3: #e0e0e0;
+  --border: rgba(0,0,0,0.08);
+  --border-med: rgba(0,0,0,0.15);
+  --text: #111111;
+  --text2: #555555;
+  --text3: #999999;
+}
+body.light #header { background: rgba(244,244,244,0.92); }
+body.light #profile-banner { background: linear-gradient(135deg,#ffe0cc 0%,#ffc9a0 50%,#ffe0cc 100%); }
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
 a { color: var(--text); text-decoration: none; cursor: pointer; }
 button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
@@ -122,6 +136,7 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
     <a href="index.html">paltube</a>
   </div>
   <div id="header-right">
+    <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="toggle theme" style="padding:7px 10px;font-size:16px">☀</button>
     <span id="userbar-guest">
       <button class="hbtn" onclick="openAuth('login')">log in</button>
       <button class="hbtn hbtn-orange" onclick="openAuth('register')">register</button>
@@ -496,6 +511,10 @@ function fmtDate(ts){var d=new Date(ts);return(d.getMonth()+1)+'/'+d.getFullYear
 function fmtDateFull(ts){var d=new Date(ts);var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();}
 var toastTimer;
 function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2800);}
+
+function applyTheme(light){document.body.classList.toggle('light',light);localStorage.setItem('pt_theme',light?'light':'dark');var btn=document.getElementById('theme-btn');if(btn)btn.textContent=light?'🌙':'☀';}
+function toggleTheme(){applyTheme(!document.body.classList.contains('light'));}
+if(localStorage.getItem('pt_theme')==='light'){document.body.classList.add('light');var _tb=document.getElementById('theme-btn');if(_tb)_tb.textContent='🌙';}
 
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAuth();closeEditProfile();}});
 init();
