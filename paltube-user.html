@@ -123,6 +123,10 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
 .btn-orange { background:var(--orange); color:#fff; border:none; border-radius:var(--radius-sm); padding:9px 0; font-size:14px; font-weight:600; width:100%; }
 .btn-orange:hover { background:var(--orange-hover); }
 
+/* VERIFIED */
+.verified { display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--orange);border-radius:50%;margin-left:6px;vertical-align:middle;flex-shrink:0; }
+.verified svg { width:11px;height:11px; }
+
 /* LOADING */
 .skel { background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:var(--radius-sm); }
 @keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
@@ -340,10 +344,10 @@ async function init() {
 
   var userData;
   if (userId) {
-    var rows = await sbGet('users?id=eq.'+userId+'&select=id,username,created_at,pfp_url,bio');
+    var rows = await sbGet('users?id=eq.'+userId+'&select=id,username,created_at,pfp_url,bio,is_verified');
     userData = rows && rows[0];
   } else if (username) {
-    var rows2 = await sbGet('users?username=eq.'+encodeURIComponent(username)+'&select=id,username,created_at,pfp_url,bio');
+    var rows2 = await sbGet('users?username=eq.'+encodeURIComponent(username)+'&select=id,username,created_at,pfp_url,bio,is_verified');
     userData = rows2 && rows2[0];
   }
 
@@ -394,8 +398,10 @@ function renderProfile() {
 
   // username
   var unEl = document.getElementById('profile-username');
-  unEl.textContent = u.username || 'Anonymous';
   unEl.className = '';
+  unEl.innerHTML = escHtml(u.username||'Anonymous') + (u.is_verified
+    ? '<span class="verified" title="verified"><svg viewBox="0 0 10 10" fill="white"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
+    : '');
 
   // bio
   var bio = u.bio || '';
