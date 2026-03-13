@@ -455,9 +455,9 @@ function updateUserbar() {
     var pfpHtml = currentUser.pfp_url
       ? '<div class="avatar" style="background:none;overflow:hidden;padding:0"><img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>'
       : '<div class="avatar">'+escHtml(currentUser.username[0].toUpperCase())+'</div>';
-    el.innerHTML='<span style="font-size:13px;color:var(--text2);cursor:pointer" onclick="window.location.href='paltube-user.html?u='+currentUser.id">'+escHtml(currentUser.username)+'</span>'
-      +pfpHtml
-      +'<button class="hbtn" onclick="logout()">log out</button>';
+    el.innerHTML = '<span style="font-size:13px;color:var(--text2);cursor:pointer" onclick="goToMyProfile()">'+escHtml(currentUser.username)+'</span>'
+      + pfpHtml
+      + '<button class="hbtn" onclick="logout()">log out</button>';
     document.getElementById('comment-avatar').textContent = currentUser.username[0].toUpperCase();
     document.getElementById('comment-avatar').style.background = var_orange();
   } else {
@@ -466,6 +466,10 @@ function updateUserbar() {
     document.getElementById('comment-avatar').textContent = '?';
     document.getElementById('comment-avatar').style.background = 'var(--surface3)';
   }
+}
+function goToMyProfile() {
+  if (currentUser) window.location.href = 'paltube-user.html?u=' + currentUser.id;
+}
 }
 function var_orange() { return '#e85d00'; }
 
