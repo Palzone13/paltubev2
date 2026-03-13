@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>paltube — profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --orange: #e85d00; --orange-hover: #d05000; --orange-light: #2a1500;
+  --bg: #0a0a0a; --surface: #141414; --surface2: #1e1e1e; --surface3: #282828;
+  --border: rgba(255,255,255,0.07); --border-med: rgba(255,255,255,0.13);
+  --text: #f0f0f0; --text2: #aaa; --text3: #666;
+  --radius: 10px; --radius-sm: 6px; --radius-lg: 14px;
+}
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
+a { color: var(--text); text-decoration: none; cursor: pointer; }
+button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
+::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* HEADER */
+#header { position:sticky; top:0; z-index:100; background:rgba(10,10,10,0.92); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:16px; padding:0 20px; height:54px; }
+#logo { font-size:17px; font-weight:700; color:var(--orange); display:flex; align-items:center; gap:6px; white-space:nowrap; }
+#logo svg { width:26px; height:18px; }
+#header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+.hbtn { font-size:13px; padding:6px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-med); background:transparent; color:var(--text2); }
+.hbtn:hover { background:var(--surface2); color:var(--text); }
+.hbtn-orange { background:var(--orange); color:#fff; border-color:var(--orange); }
+.hbtn-orange:hover { background:var(--orange-hover); }
+.avatar { width:30px; height:30px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:#fff; cursor:pointer; overflow:hidden; flex-shrink:0; }
+.avatar img { width:100%; height:100%; object-fit:cover; }
+
+/* PAGE */
+#page { max-width:1020px; margin:0 auto; padding:0 16px 40px; }
+
+/* BANNER */
+#profile-banner { height:200px; background:linear-gradient(135deg, #1a0a00 0%, #3d1500 50%, #1a0a00 100%); position:relative; overflow:hidden; }
+#profile-banner::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 30% 50%, rgba(232,93,0,0.25) 0%, transparent 70%); }
+
+/* PROFILE HEADER */
+#profile-header { display:flex; align-items:flex-end; gap:20px; padding:0 24px; margin-top:-50px; margin-bottom:20px; position:relative; z-index:1; flex-wrap:wrap; }
+#profile-avatar { width:100px; height:100px; border-radius:50%; border:4px solid var(--bg); background:var(--orange); display:flex; align-items:center; justify-content:center; font-size:38px; font-weight:700; color:#fff; flex-shrink:0; overflow:hidden; }
+#profile-avatar img { width:100%; height:100%; object-fit:cover; }
+#profile-info { flex:1; min-width:200px; padding-bottom:6px; }
+#profile-username { font-size:24px; font-weight:700; margin-bottom:4px; }
+#profile-bio { font-size:13px; color:var(--text2); line-height:1.55; max-width:500px; margin-bottom:8px; }
+#profile-stats { display:flex; gap:20px; }
+.pstat { font-size:13px; color:var(--text3); }
+.pstat b { color:var(--text); font-size:15px; display:block; }
+#profile-actions { display:flex; gap:10px; align-items:flex-end; padding-bottom:8px; flex-shrink:0; }
+#follow-btn { padding:9px 22px; border-radius:20px; border:none; background:var(--orange); color:#fff; font-size:14px; font-weight:600; }
+#follow-btn:hover { background:var(--orange-hover); }
+#follow-btn.following { background:var(--surface3); color:var(--text2); border:1px solid var(--border-med); }
+#edit-profile-btn { padding:9px 18px; border-radius:20px; border:1px solid var(--border-med); background:transparent; color:var(--text2); font-size:13px; display:none; }
+#edit-profile-btn:hover { background:var(--surface2); color:var(--text); }
+
+/* TABS */
+.profile-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:24px; padding:0 0px; }
+.profile-tab { font-size:14px; font-weight:500; padding:12px 20px; border:none; background:transparent; color:var(--text3); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; font-family:inherit; }
+.profile-tab:hover { color:var(--text2); }
+.profile-tab.active { color:var(--text); border-bottom-color:var(--orange); }
+
+/* VIDEO GRID */
+.video-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:16px; }
+.video-card { cursor:pointer; transition:transform .15s; }
+.video-card:hover { transform:translateY(-2px); }
+.video-thumb { width:100%; aspect-ratio:16/9; background:var(--surface2); border-radius:var(--radius); overflow:hidden; position:relative; margin-bottom:10px; }
+.video-thumb video, .video-thumb img { width:100%; height:100%; object-fit:cover; }
+.play-overlay { position:absolute; inset:0; background:rgba(0,0,0,0); display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.video-card:hover .play-overlay { background:rgba(0,0,0,0.35); }
+.play-overlay svg { width:42px; height:42px; opacity:0; transition:opacity .15s; }
+.video-card:hover .play-overlay svg { opacity:1; }
+.video-title { font-size:13px; font-weight:500; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:3px; }
+.video-stats { font-size:11px; color:var(--text3); }
+.cat-badge { display:inline-block; font-size:10px; padding:1px 7px; border-radius:10px; background:var(--surface2); color:var(--text2); margin-top:3px; }
+
+/* EMPTY */
+.empty-state { text-align:center; padding:60px 20px; color:var(--text3); }
+.empty-state svg { width:52px; height:52px; margin:0 auto 14px; display:block; opacity:.3; }
+.empty-state p { font-size:14px; }
+
+/* ABOUT TAB */
+#about-tab { display:none; }
+.about-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); padding:20px 22px; margin-bottom:14px; }
+.about-card h4 { font-size:13px; font-weight:600; color:var(--text3); margin-bottom:10px; text-transform:uppercase; letter-spacing:.5px; }
+.about-card p { font-size:14px; color:var(--text2); line-height:1.65; }
+
+/* TOAST */
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--surface3); color:var(--text); border:1px solid var(--border-med); border-radius:20px; padding:10px 20px; font-size:13px; z-index:999; transition:transform .25s; pointer-events:none; white-space:nowrap; }
+#toast.show { transform:translateX(-50%) translateY(0); }
+
+/* AUTH MODAL */
+#auth-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; align-items:center; justify-content:center; }
+#auth-modal.open { display:flex; }
+#auth-box { background:var(--surface); border:1px solid var(--border-med); border-radius:var(--radius-lg); padding:28px 30px; width:360px; max-width:95vw; }
+#auth-box h2 { font-size:18px; font-weight:700; margin-bottom:18px; }
+.auth-tabs { display:flex; gap:4px; margin-bottom:18px; }
+.auth-tab { font-size:13px; padding:5px 16px; border-radius:20px; border:1px solid transparent; background:transparent; color:var(--text2); }
+.auth-tab.active { background:var(--orange); color:#fff; }
+.field { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+.field label { font-size:12px; font-weight:500; color:var(--text2); }
+.field input, .field textarea { background:var(--surface2); border:1px solid var(--border-med); border-radius:var(--radius-sm); padding:9px 12px; font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); outline:none; width:100%; }
+.field input:focus, .field textarea:focus { border-color:var(--orange); }
+.field textarea { resize:vertical; height:80px; }
+.form-err { font-size:12px; color:#ff9955; margin-bottom:8px; display:none; }
+.form-err.show { display:block; }
+.btn-orange { background:var(--orange); color:#fff; border:none; border-radius:var(--radius-sm); padding:9px 0; font-size:14px; font-weight:600; width:100%; }
+.btn-orange:hover { background:var(--orange-hover); }
+
+/* LOADING */
+.skel { background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:var(--radius-sm); }
+@keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="logo">
+    <svg viewBox="0 0 28 20" fill="none"><rect width="28" height="20" rx="5" fill="#e85d00"/><polygon points="11,5 22,10 11,15" fill="white"/></svg>
+    <a href="index.html">paltube</a>
+  </div>
+  <div id="header-right">
+    <span id="userbar-guest">
+      <button class="hbtn" onclick="openAuth('login')">log in</button>
+      <button class="hbtn hbtn-orange" onclick="openAuth('register')">register</button>
+    </span>
+    <span id="userbar-loggedin" style="display:none;align-items:center;gap:10px"></span>
+  </div>
+</div>
+
+<div id="page">
+  <div id="profile-banner"></div>
+
+  <div id="profile-header">
+    <div id="profile-avatar">?</div>
+    <div id="profile-info">
+      <div id="profile-username" class="skel" style="width:180px;height:26px;margin-bottom:8px">&nbsp;</div>
+      <div id="profile-bio" style="color:var(--text3);font-style:italic">loading...</div>
+      <div id="profile-stats">
+        <div class="pstat"><b id="stat-videos">0</b>videos</div>
+        <div class="pstat"><b id="stat-views">0</b>total views</div>
+        <div class="pstat"><b id="stat-joined">—</b>joined</div>
+      </div>
+    </div>
+    <div id="profile-actions">
+      <button id="edit-profile-btn" onclick="openEditProfile()">✏ edit profile</button>
+      <button id="follow-btn" onclick="toggleFollow()">Follow</button>
+    </div>
+  </div>
+
+  <div class="profile-tabs">
+    <button class="profile-tab active" onclick="showTab('videos')">Videos</button>
+    <button class="profile-tab" onclick="showTab('about')">About</button>
+  </div>
+
+  <div id="videos-tab">
+    <div class="video-grid" id="video-grid">
+      <div style="grid-column:1/-1;color:var(--text3);font-size:13px;padding:20px 0">loading...</div>
+    </div>
+  </div>
+
+  <div id="about-tab">
+    <div class="about-card">
+      <h4>about</h4>
+      <p id="about-bio">no bio yet.</p>
+    </div>
+    <div class="about-card">
+      <h4>channel info</h4>
+      <p id="about-joined" style="color:var(--text3);font-size:13px"></p>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div id="edit-modal" onclick="if(event.target===this)closeEditProfile()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border-med);border-radius:var(--radius-lg);padding:26px 28px;width:420px;max-width:95vw">
+    <h3 style="font-size:16px;font-weight:700;margin-bottom:18px">edit profile</h3>
+    <div class="field">
+      <label>profile picture</label>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="edit-pfp-preview" style="width:56px;height:56px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0">?</div>
+        <div>
+          <input type="file" id="edit-pfp-input" accept="image/*" style="display:none" onchange="handlePfpSelect(this.files[0])">
+          <button class="hbtn" onclick="document.getElementById('edit-pfp-input').click()">change photo</button>
+          <div id="pfp-progress" style="font-size:12px;color:var(--orange);margin-top:4px;display:none">uploading...</div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>bio</label>
+      <textarea id="edit-bio" placeholder="tell people about yourself..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-orange" onclick="saveProfile()" style="flex:1">save</button>
+      <button onclick="closeEditProfile()" style="flex:1;background:var(--surface2);border:none;border-radius:var(--radius-sm);color:var(--text2);font-size:14px;cursor:pointer;font-family:inherit">cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" onclick="if(event.target===this)closeAuth()">
+  <div id="auth-box">
+    <h2>welcome to paltube</h2>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">log in</button>
+      <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">register</button>
+    </div>
+    <div id="auth-login">
+      <div class="field"><label>username</label><input type="text" id="login-user" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="field"><label>password</label><input type="password" id="login-pass" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-err" id="login-err"></div>
+      <button class="btn-orange" onclick="doLogin()">log in</button>
+    </div>
+    <div id="auth-register" style="display:none">
+      <div class="field"><label>username</label><input type="text" id="reg-user"></div>
+      <div class="field"><label>password</label><input type="password" id="reg-pass"></div>
+      <div class="field"><label>confirm password</label><input type="password" id="reg-pass2"></div>
+      <div class="form-err" id="reg-err"></div>
+      <button class="btn-orange" onclick="doRegister()">register</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var SUPABASE_URL = 'https://actpttkngkmjmzhukxva.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_c7jHjcNicXKabcFPCzKjyA_ViTc0-ti';
+
+var currentUser = null;
+var profileUser = null;
+var profileVideos = [];
+var isFollowing = false;
+var FOLLOWED_KEY = 'pt_followed';
+var followedChannels = JSON.parse(localStorage.getItem(FOLLOWED_KEY)||'[]');
+var CAT_COLORS = {general:'#888',gaming:'#7c3aed',music:'#db2777',tech:'#2563eb',comedy:'#d97706',education:'#059669',news:'#dc2626',sports:'#ea580c',art:'#9333ea',vlog:'#0891b2'};
+
+// ── SUPABASE ──
+async function sbGet(path) {
+  var r = await fetch(SUPABASE_URL+'/rest/v1/'+path, { headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY} });
+  return r.json();
+}
+async function sbPost(table, body) {
+  var r = await fetch(SUPABASE_URL+'/rest/v1/'+table, {
+    method:'POST', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body: JSON.stringify(body)
+  });
+  var d = await r.json(); return Array.isArray(d)?d[0]:d;
+}
+async function sbPatchUser(id, body) {
+  await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+id, {
+    method:'PATCH', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+}
+
+// ── SESSION ──
+function saveSession(u) { localStorage.setItem('pt_user',JSON.stringify(u)); currentUser=u; updateUserbar(); }
+function loadSession() { try { var s=localStorage.getItem('pt_user'); if(s){currentUser=JSON.parse(s);updateUserbar();} } catch(e){} }
+function logout() { localStorage.removeItem('pt_user'); currentUser=null; updateUserbar(); toast('logged out'); }
+
+function updateUserbar() {
+  if (currentUser) {
+    document.getElementById('userbar-guest').style.display='none';
+    var el=document.getElementById('userbar-loggedin'); el.style.display='flex';
+    var pfpHtml = currentUser.pfp_url
+      ? '<div class="avatar"><img src="'+escHtml(currentUser.pfp_url)+'"></div>'
+      : '<div class="avatar">'+escHtml(currentUser.username[0].toUpperCase())+'</div>';
+    el.innerHTML='<span style="font-size:13px;color:var(--text2)">'+escHtml(currentUser.username)+'</span>'
+      +pfpHtml+'<button class="hbtn" onclick="logout()">log out</button>';
+    // show edit button if viewing own profile
+    if (profileUser && profileUser.id === currentUser.id) {
+      document.getElementById('edit-profile-btn').style.display='';
+      document.getElementById('follow-btn').style.display='none';
+    }
+  } else {
+    document.getElementById('userbar-guest').style.display='';
+    document.getElementById('userbar-loggedin').style.display='none';
+  }
+}
+
+// ── AUTH ──
+function openAuth(tab) { document.getElementById('auth-modal').classList.add('open'); switchAuthTab(tab||'login'); }
+function closeAuth() { document.getElementById('auth-modal').classList.remove('open'); }
+function switchAuthTab(tab) {
+  document.getElementById('auth-login').style.display=tab==='login'?'':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'':'none';
+  document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register-btn').classList.toggle('active',tab==='register');
+}
+async function doLogin() {
+  var u=document.getElementById('login-user').value.trim(), p=document.getElementById('login-pass').value;
+  var err=document.getElementById('login-err'); err.classList.remove('show');
+  if(!u||!p){err.textContent='fill in all fields.';err.classList.add('show');return;}
+  var rows=await sbGet('users?username=eq.'+encodeURIComponent(u)+'&select=id,username,password,created_at,pfp_url,bio');
+  if(!rows||!rows.length){err.textContent='user not found.';err.classList.add('show');return;}
+  if(rows[0].password!==btoa(p)){err.textContent='wrong password.';err.classList.add('show');return;}
+  saveSession({id:rows[0].id,username:rows[0].username,created_at:rows[0].created_at,pfp_url:rows[0].pfp_url,bio:rows[0].bio});
+  closeAuth(); toast('welcome back, '+rows[0].username+'!');
+  updateUserbar();
+}
+async function doRegister() {
+  var u=document.getElementById('reg-user').value.trim(), p=document.getElementById('reg-pass').value, p2=document.getElementById('reg-pass2').value;
+  var err=document.getElementById('reg-err'); err.classList.remove('show');
+  if(!u||!p){err.textContent='fill in all fields.';err.classList.add('show');return;}
+  if(u.length<3){err.textContent='username must be 3+ chars.';err.classList.add('show');return;}
+  if(p.length<4){err.textContent='password must be 4+ chars.';err.classList.add('show');return;}
+  if(p!==p2){err.textContent='passwords do not match.';err.classList.add('show');return;}
+  var ex=await sbGet('users?username=eq.'+encodeURIComponent(u)+'&select=id');
+  if(ex&&ex.length){err.textContent='username taken.';err.classList.add('show');return;}
+  var saved=await sbPost('users',{username:u,password:btoa(p)});
+  if(!saved||!saved.id){err.textContent='error creating account.';err.classList.add('show');return;}
+  saveSession({id:saved.id,username:saved.username,created_at:saved.created_at});
+  closeAuth(); toast('welcome, '+saved.username+'!');
+}
+
+// ── INIT ──
+async function init() {
+  loadSession();
+  var params = new URLSearchParams(window.location.search);
+  var userId = parseInt(params.get('u'));
+  var username = params.get('name');
+
+  var userData;
+  if (userId) {
+    var rows = await sbGet('users?id=eq.'+userId+'&select=id,username,created_at,pfp_url,bio');
+    userData = rows && rows[0];
+  } else if (username) {
+    var rows2 = await sbGet('users?username=eq.'+encodeURIComponent(username)+'&select=id,username,created_at,pfp_url,bio');
+    userData = rows2 && rows2[0];
+  }
+
+  if (!userData) {
+    document.getElementById('profile-username').textContent = 'user not found';
+    document.getElementById('profile-bio').textContent = '';
+    document.getElementById('video-grid').innerHTML = '';
+    return;
+  }
+
+  profileUser = userData;
+  renderProfile();
+
+  // load videos
+  var vids = await sbGet('pt_videos?user_id=eq.'+userData.id+'&order=created_at.desc');
+  profileVideos = vids || [];
+  renderVideos();
+
+  // update stats
+  var totalViews = profileVideos.reduce(function(s,v){return s+(v.views||0);},0);
+  document.getElementById('stat-videos').textContent = profileVideos.length;
+  document.getElementById('stat-views').textContent = fmtNum(totalViews);
+  document.getElementById('stat-joined').textContent = fmtDate(userData.created_at);
+  document.getElementById('about-joined').textContent = 'joined ' + fmtDateFull(userData.created_at) + ' · ' + profileVideos.length + ' videos · ' + fmtNum(totalViews) + ' total views';
+
+  // follow state
+  isFollowing = followedChannels.indexOf(String(userData.id)) !== -1;
+  updateFollowBtn();
+
+  // show edit if own profile
+  if (currentUser && currentUser.id === userData.id) {
+    document.getElementById('edit-profile-btn').style.display = '';
+    document.getElementById('follow-btn').style.display = 'none';
+  }
+}
+
+function renderProfile() {
+  var u = profileUser;
+  document.title = (u.username||'user') + ' — paltube';
+
+  // avatar
+  var avatarEl = document.getElementById('profile-avatar');
+  if (u.pfp_url) {
+    avatarEl.innerHTML = '<img src="'+escHtml(u.pfp_url)+'">';
+  } else {
+    avatarEl.textContent = (u.username||'?')[0].toUpperCase();
+  }
+
+  // username
+  var unEl = document.getElementById('profile-username');
+  unEl.textContent = u.username || 'Anonymous';
+  unEl.className = '';
+
+  // bio
+  var bio = u.bio || '';
+  document.getElementById('profile-bio').textContent = bio || 'no bio yet.';
+  document.getElementById('profile-bio').style.fontStyle = bio ? 'normal' : 'italic';
+  document.getElementById('about-bio').textContent = bio || 'this user has not written a bio yet.';
+}
+
+function renderVideos() {
+  var grid = document.getElementById('video-grid');
+  if (!profileVideos.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg><p>no videos yet</p></div>';
+    return;
+  }
+  grid.innerHTML = profileVideos.map(function(v){
+    var catColor = CAT_COLORS[v.category]||'#888';
+    return '<div class="video-card" onclick="watchVideo('+v.id+')">'
+      +'<div class="video-thumb">'
+      +(v.thumbnail_url?'<img src="'+escHtml(v.thumbnail_url)+'" loading="lazy">':'<video src="'+escHtml(v.video_url)+'#t=2" preload="metadata" muted></video>')
+      +'<div class="play-overlay"><svg viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.5)"/><polygon points="10,8 18,12 10,16"/></svg></div>'
+      +'</div>'
+      +'<div class="video-title">'+escHtml(v.title)+'</div>'
+      +'<div class="video-stats">'+fmtNum(v.views||0)+' views &bull; '+fmtAgo(v.created_at)+'</div>'
+      +'<span class="cat-badge" style="background:'+catColor+'22;color:'+catColor+'">'+escHtml(v.category||'general')+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+function watchVideo(id) {
+  window.location.href = 'paltube-watch.html?v='+id;
+}
+
+// ── TABS ──
+function showTab(tab) {
+  document.getElementById('videos-tab').style.display = tab==='videos' ? '' : 'none';
+  document.getElementById('about-tab').style.display = tab==='about' ? 'block' : 'none';
+  document.querySelectorAll('.profile-tab').forEach(function(b,i){
+    b.classList.toggle('active', ['videos','about'][i]===tab);
+  });
+}
+
+// ── FOLLOW ──
+function toggleFollow() {
+  if (!profileUser) return;
+  var uid = String(profileUser.id);
+  var idx = followedChannels.indexOf(uid);
+  if (idx !== -1) { followedChannels.splice(idx,1); isFollowing=false; toast('unfollowed '+profileUser.username); }
+  else { followedChannels.push(uid); isFollowing=true; toast('now following '+profileUser.username+'! 🎉'); }
+  localStorage.setItem(FOLLOWED_KEY, JSON.stringify(followedChannels));
+  updateFollowBtn();
+}
+function updateFollowBtn() {
+  var btn = document.getElementById('follow-btn');
+  btn.textContent = isFollowing ? 'Following ✓' : 'Follow';
+  btn.classList.toggle('following', isFollowing);
+}
+
+// ── EDIT PROFILE ──
+function openEditProfile() {
+  if (!currentUser) return;
+  document.getElementById('edit-bio').value = currentUser.bio || '';
+  var prev = document.getElementById('edit-pfp-preview');
+  if (currentUser.pfp_url) prev.innerHTML='<img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+  else { prev.textContent = currentUser.username[0].toUpperCase(); prev.style.background='var(--orange)'; }
+  document.getElementById('edit-modal').style.display='flex';
+}
+function closeEditProfile() { document.getElementById('edit-modal').style.display='none'; }
+
+async function saveProfile() {
+  if (!currentUser) return;
+  var bio = document.getElementById('edit-bio').value.trim();
+  await sbPatchUser(currentUser.id, { bio: bio });
+  currentUser.bio = bio;
+  saveSession(currentUser);
+  if (profileUser && profileUser.id === currentUser.id) {
+    profileUser.bio = bio;
+    renderProfile();
+  }
+  closeEditProfile();
+  toast('profile updated!');
+}
+
+async function handlePfpSelect(file) {
+  if (!file || !currentUser) return;
+  if (file.size > 5*1024*1024) { toast('image too large — max 5MB'); return; }
+  var prog = document.getElementById('pfp-progress'); prog.style.display='block';
+  var ext = file.name.split('.').pop().toLowerCase();
+  var filename = 'pfp_'+currentUser.id+'_'+Date.now()+'.'+ext;
+  var r = await fetch(SUPABASE_URL+'/storage/v1/object/avatars/'+filename, {
+    method:'POST', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type,'x-upsert':'true'}, body:file
+  });
+  prog.style.display='none';
+  if (!r.ok) { toast('upload failed'); return; }
+  var pfpUrl = SUPABASE_URL+'/storage/v1/object/public/avatars/'+filename;
+  await sbPatchUser(currentUser.id, { pfp_url: pfpUrl });
+  currentUser.pfp_url = pfpUrl;
+  saveSession(currentUser);
+  var prev = document.getElementById('edit-pfp-preview');
+  prev.innerHTML='<img src="'+escHtml(pfpUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+  if (profileUser && profileUser.id === currentUser.id) {
+    profileUser.pfp_url = pfpUrl;
+    renderProfile();
+  }
+  updateUserbar();
+  toast('profile picture updated! 🎉');
+}
+
+// ── UTILS ──
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtNum(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return String(n);}
+function fmtAgo(ts){var d=(Date.now()-new Date(ts).getTime())/1000;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m ago';if(d<86400)return Math.floor(d/3600)+'h ago';if(d<2592000)return Math.floor(d/86400)+'d ago';return Math.floor(d/2592000)+'mo ago';}
+function fmtDate(ts){var d=new Date(ts);return(d.getMonth()+1)+'/'+d.getFullYear();}
+function fmtDateFull(ts){var d=new Date(ts);var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();}
+var toastTimer;
+function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2800);}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAuth();closeEditProfile();}});
+init();
+</script>
+</body>
+</html>
