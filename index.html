@@ -495,6 +495,11 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
         </div>
       </div>
     </div>
+    <div class="settings-section" id="settings-bio-section" style="display:none">
+      <div class="settings-section-label">bio</div>
+      <textarea id="settings-bio" placeholder="tell people about yourself..." style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:var(--radius-sm);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:vertical;height:80px;outline:none;box-sizing:border-box"></textarea>
+      <button onclick="saveBio()" style="margin-top:8px;padding:7px 18px;border-radius:var(--radius-sm);border:none;background:var(--orange);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">save bio</button>
+    </div>
     <div class="settings-section">
       <div class="settings-section-label">language</div>
       <div class="lang-grid" id="lang-grid"></div>
@@ -817,7 +822,7 @@ async function watchVideo(id) {
 }
 
 function openChannelById() {
-  if (currentVideo) openChannel(currentVideo.user_id, currentVideo.username);
+  if (currentVideo) window.location.href='paltube-user.html?u='+currentVideo.user_id;
 }
 
 function showPage(name) {
@@ -901,7 +906,7 @@ async function postComment() {
 // ── CHANNEL ───────────────────────────────────────────────────────────────────
 function showMyChannel() {
   if (!currentUser) { openAuth('login'); return; }
-  openChannel(currentUser.id, currentUser.username);
+  window.location.href = 'paltube-user.html?u='+currentUser.id;
 }
 
 function openChannel(userId, username) {
@@ -1229,11 +1234,28 @@ function renderLangGrid() {
 function openSettings() {
   renderLangGrid();
   document.getElementById('setting-compact').checked = document.body.classList.contains('compact');
-  if(currentUser){document.getElementById('settings-pfp-section').style.display='';refreshPfpPreview();}
-  else document.getElementById('settings-pfp-section').style.display='none';
+  if(currentUser){
+    document.getElementById('settings-pfp-section').style.display='';
+    document.getElementById('settings-bio-section').style.display='';
+    document.getElementById('settings-bio').value = currentUser.bio||'';
+    refreshPfpPreview();
+  } else {
+    document.getElementById('settings-pfp-section').style.display='none';
+    document.getElementById('settings-bio-section').style.display='none';
+  }
   document.getElementById('settings-modal').classList.add('open');
 }
 function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+async function saveBio(){
+  if(!currentUser)return;
+  var bio=document.getElementById('settings-bio').value.trim();
+  await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+currentUser.id,{
+    method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({bio:bio})
+  });
+  currentUser.bio=bio; saveSession(currentUser);
+  toast('bio saved!');
+}
 function applyCompact(on){document.body.classList.toggle('compact',on);localStorage.setItem('pt_compact',on?'1':'0');}
 
 function refreshPfpPreview(){
