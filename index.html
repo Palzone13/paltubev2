@@ -655,7 +655,7 @@ function renderGrid(gridId, videos) {
 function videoCardHtml(v) {
   var initials = (v.username||'?')[0].toUpperCase();
   var catColor = CAT_COLORS[v.category] || '#888';
-  return '<div class="video-card" onclick="watchVideo('+v.id+')">'
+  return '<div class="video-card" onclick="window.location.href=\'paltube-watch.html?v='+v.id+'\'">'
     +'<div class="video-thumb">'
     +(v.thumbnail_url ? '<img src="'+escHtml(v.thumbnail_url)+'" loading="lazy">' : '<video src="'+escHtml(v.video_url)+'#t=2" preload="metadata" muted></video>')
     +'<div class="play-overlay"><svg viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.5)"/><polygon points="10,8 18,12 10,16"/></svg></div>'
