@@ -197,6 +197,26 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
 #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface3); color: var(--text); border: 1px solid var(--border-med); border-radius: 20px; padding: 10px 20px; font-size: 13px; z-index: 999; transition: transform .25s; pointer-events: none; white-space: nowrap; }
 #toast.show { transform: translateX(-50%) translateY(0); }
 
+/* ── SETTINGS ── */
+#settings-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:300; align-items:center; justify-content:center; }
+#settings-modal.open { display:flex; }
+#settings-box { background:var(--surface); border:1px solid var(--border-med); border-radius:var(--radius-lg); padding:26px 28px; width:440px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+#settings-box h2 { font-size:17px; font-weight:700; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; }
+.settings-section { margin-bottom:22px; }
+.settings-section-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.7px; margin-bottom:12px; }
+.pfp-upload-wrap { display:flex; align-items:center; gap:14px; }
+.pfp-preview { width:64px; height:64px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:#fff; overflow:hidden; flex-shrink:0; }
+.pfp-preview img { width:100%; height:100%; object-fit:cover; }
+.pfp-upload-btn { font-size:13px; padding:7px 16px; border-radius:var(--radius-sm); border:1px solid var(--border-med); background:var(--surface2); color:var(--text); cursor:pointer; font-family:inherit; }
+.pfp-upload-btn:hover { background:var(--surface3); }
+.pfp-progress { font-size:12px; color:var(--orange); margin-top:6px; display:none; }
+.pfp-progress.show { display:block; }
+.lang-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.lang-btn { padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:transparent; color:var(--text2); font-size:13px; cursor:pointer; text-align:left; font-family:inherit; display:flex; align-items:center; gap:8px; }
+.lang-btn:hover { background:var(--surface2); color:var(--text); }
+.lang-btn.active { border-color:var(--orange); background:var(--orange-light); color:var(--orange); }
+.lang-btn .lang-flag { font-size:18px; }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 800px) {
   #page { grid-template-columns: 1fr; }
@@ -213,6 +233,7 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
     <a href="index.html">paltube</a>
   </div>
   <div id="header-right">
+    <button class="hbtn" onclick="openSettings()" title="settings" style="padding:6px 10px;font-size:15px">⚙</button>
     <span id="userbar-guest">
       <button class="hbtn" onclick="openAuth('login')">log in</button>
       <button class="hbtn hbtn-orange" onclick="openAuth('register')">register</button>
@@ -326,6 +347,30 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div id="settings-box">
+    <h2>settings <button onclick="closeSettings()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1">✕</button></h2>
+    <div class="settings-section" id="settings-pfp-section" style="display:none">
+      <div class="settings-section-label">profile picture</div>
+      <div class="pfp-upload-wrap">
+        <div class="pfp-preview" id="settings-pfp-preview">?</div>
+        <div>
+          <input type="file" id="pfp-file-input" accept="image/*" style="display:none" onchange="handlePfpSelect(this.files[0])">
+          <button class="pfp-upload-btn" onclick="document.getElementById('pfp-file-input').click()">upload image</button>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">jpg, png, webp — max 5MB</div>
+          <div class="pfp-progress" id="pfp-progress">uploading...</div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-label">language</div>
+      <div class="lang-grid" id="lang-grid"></div>
+    </div>
+    <button onclick="closeSettings()" style="width:100%;padding:9px;border-radius:var(--radius-sm);border:1px solid var(--border-med);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">close</button>
+  </div>
+</div>
+
 <!-- AUTH MODAL -->
 <div id="auth-modal" onclick="if(event.target===this)closeAuth()">
   <div id="auth-box">
@@ -402,8 +447,11 @@ function updateUserbar() {
   if (currentUser) {
     document.getElementById('userbar-guest').style.display='none';
     var el=document.getElementById('userbar-loggedin'); el.style.display='flex';
+    var pfpHtml = currentUser.pfp_url
+      ? '<div class="avatar" style="background:none;overflow:hidden;padding:0"><img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>'
+      : '<div class="avatar">'+escHtml(currentUser.username[0].toUpperCase())+'</div>';
     el.innerHTML='<span style="font-size:13px;color:var(--text2)">'+escHtml(currentUser.username)+'</span>'
-      +'<div class="avatar">'+escHtml(currentUser.username[0].toUpperCase())+'</div>'
+      +pfpHtml
       +'<button class="hbtn" onclick="logout()">log out</button>';
     document.getElementById('comment-avatar').textContent = currentUser.username[0].toUpperCase();
     document.getElementById('comment-avatar').style.background = var_orange();
@@ -692,6 +740,65 @@ function fmtAgo(ts){
 }
 var toastTimer;
 function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2800);}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+var LANGUAGES = [
+  {code:'en',flag:'🇺🇸',name:'English'},{code:'es',flag:'🇪🇸',name:'Español'},
+  {code:'fr',flag:'🇫🇷',name:'Français'},{code:'de',flag:'🇩🇪',name:'Deutsch'},
+  {code:'pt',flag:'🇧🇷',name:'Português'},{code:'ja',flag:'🇯🇵',name:'日本語'},
+  {code:'zh',flag:'🇨🇳',name:'中文'},{code:'ar',flag:'🇸🇦',name:'العربية'},
+  {code:'ru',flag:'🇷🇺',name:'Русский'},{code:'ko',flag:'🇰🇷',name:'한국어'},
+];
+var currentLang = localStorage.getItem('pt_lang')||'en';
+function applyLang(code){
+  currentLang=code; localStorage.setItem('pt_lang',code);
+  document.querySelectorAll('.lang-btn').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-lang')===code);});
+  if(code==='ar') document.body.setAttribute('dir','rtl'); else document.body.removeAttribute('dir');
+}
+function renderLangGrid() {
+  var grid = document.getElementById('lang-grid');
+  grid.innerHTML = '';
+  LANGUAGES.forEach(function(l){
+    var btn = document.createElement('button');
+    btn.className = 'lang-btn' + (currentLang===l.code ? ' active' : '');
+    btn.setAttribute('data-lang', l.code);
+    btn.innerHTML = '<span class="lang-flag">'+l.flag+'</span>'+l.name;
+    btn.onclick = function(){ applyLang(l.code); };
+    grid.appendChild(btn);
+  });
+}
+function openSettings(){
+  renderLangGrid();
+  if(currentUser){document.getElementById('settings-pfp-section').style.display='';refreshPfpPreview();}
+  else document.getElementById('settings-pfp-section').style.display='none';
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function refreshPfpPreview(){
+  var prev=document.getElementById('settings-pfp-preview');
+  if(currentUser&&currentUser.pfp_url) prev.innerHTML='<img src="'+escHtml(currentUser.pfp_url)+'">';
+  else if(currentUser){prev.textContent=currentUser.username[0].toUpperCase();prev.style.background='var(--orange)';}
+}
+async function handlePfpSelect(file){
+  if(!file)return;
+  if(file.size>5*1024*1024){toast('image too large — max 5MB');return;}
+  var prog=document.getElementById('pfp-progress'); prog.classList.add('show');
+  var ext=file.name.split('.').pop().toLowerCase();
+  var filename='pfp_'+currentUser.id+'_'+Date.now()+'.'+ext;
+  var r=await fetch(SUPABASE_URL+'/storage/v1/object/avatars/'+filename,{
+    method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type,'x-upsert':'true'},body:file
+  });
+  prog.classList.remove('show');
+  if(!r.ok){toast('upload failed');return;}
+  var pfpUrl=SUPABASE_URL+'/storage/v1/object/public/avatars/'+filename;
+  await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+currentUser.id,{
+    method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({pfp_url:pfpUrl})
+  });
+  currentUser.pfp_url=pfpUrl; saveSession(currentUser);
+  refreshPfpPreview(); updateUserbar(); toast('profile picture updated! 🎉');
+}
+applyLang(currentLang);
 
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){closeAuth();closeShare();closeReport();}
