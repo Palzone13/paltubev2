@@ -247,6 +247,36 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
 .filter-chip:hover { background: var(--surface2); color: var(--text); }
 .filter-chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
+/* ── SETTINGS ── */
+#settings-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:400; align-items:center; justify-content:center; }
+#settings-modal.open { display:flex; }
+#settings-box { background:var(--surface); border:1px solid var(--border-med); border-radius:var(--radius-lg); padding:26px 28px; width:440px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+#settings-box h2 { font-size:17px; font-weight:700; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; }
+.settings-section { margin-bottom:22px; }
+.settings-section-label { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.7px; margin-bottom:12px; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+.settings-row:last-child { border-bottom:none; }
+.settings-row-info .slabel { font-size:14px; font-weight:500; }
+.settings-row-info .sdesc { font-size:12px; color:var(--text3); margin-top:2px; }
+.toggle-switch { position:relative; width:44px; height:24px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:var(--border-med); border-radius:24px; cursor:pointer; transition:background .2s; }
+.toggle-slider::before { content:''; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform .2s; }
+.toggle-switch input:checked + .toggle-slider { background:var(--orange); }
+.toggle-switch input:checked + .toggle-slider::before { transform:translateX(20px); }
+.pfp-upload-wrap { display:flex; align-items:center; gap:14px; }
+.pfp-preview { width:64px; height:64px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:#fff; overflow:hidden; flex-shrink:0; }
+.pfp-preview img { width:100%; height:100%; object-fit:cover; }
+.pfp-upload-btn { font-size:13px; padding:7px 16px; border-radius:var(--radius-sm); border:1px solid var(--border-med); background:var(--surface2); color:var(--text); cursor:pointer; font-family:inherit; }
+.pfp-upload-btn:hover { background:var(--surface3); }
+.pfp-progress { font-size:12px; color:var(--orange); margin-top:6px; display:none; }
+.pfp-progress.show { display:block; }
+.lang-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.lang-btn { padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); background:transparent; color:var(--text2); font-size:13px; cursor:pointer; text-align:left; font-family:inherit; display:flex; align-items:center; gap:8px; }
+.lang-btn:hover { background:var(--surface2); color:var(--text); }
+.lang-btn.active { border-color:var(--orange); background:var(--orange-light); color:var(--orange); }
+.lang-btn .lang-flag { font-size:18px; }
+
 /* ── ADMIN ── */
 #admin-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:300; overflow-y:auto; padding:20px; }
 #admin-modal.open { display:block; }
@@ -285,6 +315,7 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
     <button id="search-btn" onclick="doSearch()">🔍</button>
   </div>
   <div id="header-right">
+    <button class="hbtn" onclick="openSettings()" title="settings" style="padding:7px 10px;font-size:16px">⚙</button>
     <span id="userbar-guest">
       <button class="hbtn" onclick="openAuth('login')">log in</button>
       <button class="hbtn hbtn-red" onclick="openAuth('register')">register</button>
@@ -448,6 +479,37 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
   </div>
 </div>
 
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div id="settings-box">
+    <h2>settings <button onclick="closeSettings()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1">✕</button></h2>
+    <div class="settings-section" id="settings-pfp-section" style="display:none">
+      <div class="settings-section-label">profile picture</div>
+      <div class="pfp-upload-wrap">
+        <div class="pfp-preview" id="settings-pfp-preview">?</div>
+        <div>
+          <input type="file" id="pfp-file-input" accept="image/*" style="display:none" onchange="handlePfpSelect(this.files[0])">
+          <button class="pfp-upload-btn" onclick="document.getElementById('pfp-file-input').click()">upload image</button>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">jpg, png, webp — max 5MB</div>
+          <div class="pfp-progress" id="pfp-progress">uploading...</div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-label">language</div>
+      <div class="lang-grid" id="lang-grid"></div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-label">display</div>
+      <div class="settings-row">
+        <div class="settings-row-info"><div class="slabel">compact view</div><div class="sdesc">show smaller video cards</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="setting-compact" onchange="applyCompact(this.checked)"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <button onclick="closeSettings()" style="width:100%;padding:9px;border-radius:var(--radius-sm);border:1px solid var(--border-med);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">close</button>
+  </div>
+</div>
+
 <!-- ADMIN MODAL -->
 <div id="admin-modal" onclick="if(event.target===this)closeAdmin()">
   <div id="admin-box">
@@ -593,9 +655,12 @@ function updateUserbar() {
     el.style.display='flex'; el.style.alignItems='center'; el.style.gap='10px';
     var isAdmin = currentUser.username === 'Admin';
     document.getElementById('nav-admin').style.display = isAdmin ? '' : 'none';
+    var pfpHtml = currentUser.pfp_url
+      ? '<div class="avatar" onclick="showMyChannel()" style="background:none;overflow:hidden;padding:0"><img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>'
+      : '<div class="avatar" onclick="showMyChannel()">'+escHtml(currentUser.username[0].toUpperCase())+'</div>';
     el.innerHTML = '<span style="font-size:13px;color:var(--text2)">'+escHtml(currentUser.username)+'</span>'
       +(isAdmin ? '<button class="hbtn" style="color:var(--orange);border-color:var(--orange)" onclick="openAdmin()">admin</button>' : '')
-      +'<div class="avatar" onclick="showMyChannel()">'+escHtml(currentUser.username[0].toUpperCase())+'</div>'
+      +pfpHtml
       +'<button class="hbtn" onclick="logout()">log out</button>';
   } else {
     document.getElementById('userbar-guest').style.display='';
@@ -1116,7 +1181,95 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
+// ── I18N ──────────────────────────────────────────────────────────────────────
+var LANGUAGES = [
+  {code:'en',flag:'🇺🇸',name:'English'},{code:'es',flag:'🇪🇸',name:'Español'},
+  {code:'fr',flag:'🇫🇷',name:'Français'},{code:'de',flag:'🇩🇪',name:'Deutsch'},
+  {code:'pt',flag:'🇧🇷',name:'Português'},{code:'ja',flag:'🇯🇵',name:'日本語'},
+  {code:'zh',flag:'🇨🇳',name:'中文'},{code:'ar',flag:'🇸🇦',name:'العربية'},
+  {code:'ru',flag:'🇷🇺',name:'Русский'},{code:'ko',flag:'🇰🇷',name:'한국어'},
+];
+var STRINGS = {
+  en:{home:'Home',trending:'Trending',upload:'Upload',my_channel:'My Channel',log_in:'log in',register:'register',log_out:'log out',search:'search videos...',admin:'admin'},
+  es:{home:'Inicio',trending:'Tendencias',upload:'Subir',my_channel:'Mi Canal',log_in:'iniciar sesión',register:'registrarse',log_out:'cerrar sesión',search:'buscar videos...',admin:'admin'},
+  fr:{home:'Accueil',trending:'Tendances',upload:'Télécharger',my_channel:'Ma Chaîne',log_in:'se connecter',register:"s'inscrire",log_out:'déconnexion',search:'rechercher des vidéos...',admin:'admin'},
+  de:{home:'Startseite',trending:'Trends',upload:'Hochladen',my_channel:'Mein Kanal',log_in:'anmelden',register:'registrieren',log_out:'abmelden',search:'Videos suchen...',admin:'Admin'},
+  pt:{home:'Início',trending:'Tendências',upload:'Enviar',my_channel:'Meu Canal',log_in:'entrar',register:'cadastrar',log_out:'sair',search:'buscar vídeos...',admin:'admin'},
+  ja:{home:'ホーム',trending:'急上昇',upload:'アップロード',my_channel:'マイチャンネル',log_in:'ログイン',register:'登録',log_out:'ログアウト',search:'動画を検索...',admin:'管理'},
+  zh:{home:'首页',trending:'热门',upload:'上传',my_channel:'我的频道',log_in:'登录',register:'注册',log_out:'退出',search:'搜索视频...',admin:'管理'},
+  ar:{home:'الرئيسية',trending:'رائج',upload:'رفع',my_channel:'قناتي',log_in:'دخول',register:'تسجيل',log_out:'خروج',search:'ابحث عن مقاطع...',admin:'مشرف'},
+  ru:{home:'Главная',trending:'Тренды',upload:'Загрузить',my_channel:'Мой канал',log_in:'войти',register:'регистрация',log_out:'выйти',search:'поиск видео...',admin:'Админ'},
+  ko:{home:'홈',trending:'인기',upload:'업로드',my_channel:'내 채널',log_in:'로그인',register:'회원가입',log_out:'로그아웃',search:'동영상 검색...',admin:'관리자'},
+};
+var currentLang = localStorage.getItem('pt_lang')||'en';
+function t(key){return(STRINGS[currentLang]&&STRINGS[currentLang][key])||STRINGS['en'][key]||key;}
+
+function applyLang(code) {
+  currentLang = code;
+  localStorage.setItem('pt_lang', code);
+  document.getElementById('search-input').placeholder = t('search');
+  document.querySelectorAll('.lang-btn').forEach(function(b){ b.classList.toggle('active',b.getAttribute('data-lang')===code); });
+  if(code==='ar') document.body.setAttribute('dir','rtl'); else document.body.removeAttribute('dir');
+}
+
+function renderLangGrid() {
+  var grid = document.getElementById('lang-grid');
+  grid.innerHTML = '';
+  LANGUAGES.forEach(function(l){
+    var btn = document.createElement('button');
+    btn.className = 'lang-btn' + (currentLang===l.code ? ' active' : '');
+    btn.setAttribute('data-lang', l.code);
+    btn.innerHTML = '<span class="lang-flag">'+l.flag+'</span>'+l.name;
+    btn.onclick = function(){ applyLang(l.code); };
+    grid.appendChild(btn);
+  });
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function openSettings() {
+  renderLangGrid();
+  document.getElementById('setting-compact').checked = document.body.classList.contains('compact');
+  if(currentUser){document.getElementById('settings-pfp-section').style.display='';refreshPfpPreview();}
+  else document.getElementById('settings-pfp-section').style.display='none';
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function applyCompact(on){document.body.classList.toggle('compact',on);localStorage.setItem('pt_compact',on?'1':'0');}
+
+function refreshPfpPreview(){
+  var prev=document.getElementById('settings-pfp-preview');
+  if(currentUser&&currentUser.pfp_url) prev.innerHTML='<img src="'+escHtml(currentUser.pfp_url)+'">';
+  else if(currentUser){prev.textContent=currentUser.username[0].toUpperCase();prev.style.background='var(--orange)';}
+}
+
+async function handlePfpSelect(file){
+  if(!file)return;
+  if(file.size>5*1024*1024){toast('image too large — max 5MB');return;}
+  var prog=document.getElementById('pfp-progress'); prog.classList.add('show');
+  var ext=file.name.split('.').pop().toLowerCase();
+  var filename='pfp_'+currentUser.id+'_'+Date.now()+'.'+ext;
+  var r=await fetch(SUPABASE_URL+'/storage/v1/object/avatars/'+filename,{
+    method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type,'x-upsert':'true'},body:file
+  });
+  prog.classList.remove('show');
+  if(!r.ok){toast('upload failed');return;}
+  var pfpUrl=SUPABASE_URL+'/storage/v1/object/public/avatars/'+filename;
+  await sbPatch('pt_videos',currentUser.id,{});
+  await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+currentUser.id,{
+    method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({pfp_url:pfpUrl})
+  });
+  currentUser.pfp_url=pfpUrl; saveSession(currentUser);
+  refreshPfpPreview(); updateUserbar(); toast('profile picture updated! 🎉');
+}
+
+var compactStyle=document.createElement('style');
+compactStyle.textContent='body.compact .video-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}body.compact .video-card-info .title{font-size:12px;}';
+document.head.appendChild(compactStyle);
+
 loadSession();
+if(localStorage.getItem('pt_compact')==='1') document.body.classList.add('compact');
+applyLang(currentLang);
 loadVideos();
 </script>
 </body>
