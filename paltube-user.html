@@ -438,12 +438,20 @@ function showTab(tab) {
 }
 
 // ── FOLLOW ──
-function toggleFollow() {
+async function toggleFollow() {
   if (!profileUser) return;
+  if (!currentUser) { openAuth('login'); return; }
   var uid = String(profileUser.id);
   var idx = followedChannels.indexOf(uid);
-  if (idx !== -1) { followedChannels.splice(idx,1); isFollowing=false; toast('unfollowed '+profileUser.username); }
-  else { followedChannels.push(uid); isFollowing=true; toast('now following '+profileUser.username+'! 🎉'); }
+  if (idx !== -1) {
+    followedChannels.splice(idx,1); isFollowing=false;
+    try { await sbDelete('pt_follows','follower_id=eq.'+currentUser.id+'&following_id=eq.'+profileUser.id); } catch(e){}
+    toast('unfollowed '+profileUser.username);
+  } else {
+    followedChannels.push(uid); isFollowing=true;
+    try { await sbPost('pt_follows',{follower_id:currentUser.id,following_id:profileUser.id}); } catch(e){}
+    toast('now following '+profileUser.username+'! 🎉');
+  }
   localStorage.setItem(FOLLOWED_KEY, JSON.stringify(followedChannels));
   updateFollowBtn();
 }
