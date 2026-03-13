@@ -142,6 +142,57 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
 .video-card-info .stats { font-size: 11px; color: var(--text3); margin-top: 1px; }
 .cat-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 10px; background: var(--surface3); color: var(--text2); margin-top: 3px; }
 
+/* ── SHORTS ── */
+#page-shorts {
+  position: fixed; top: 58px; left: 220px; right: 0; bottom: 0;
+  overflow-y: scroll; scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch; background: var(--bg);
+  display: none;
+}
+.short-card {
+  scroll-snap-align: start; scroll-snap-stop: always;
+  height: calc(100vh - 58px);
+  display: flex; align-items: center; justify-content: center;
+}
+.short-inner {
+  height: 100%; max-height: calc(100vh - 80px);
+  aspect-ratio: 9/16; position: relative;
+  border-radius: var(--radius-lg); overflow: hidden;
+  background: #000; cursor: pointer;
+}
+.short-inner video, .short-inner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.short-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%);
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 18px;
+}
+.short-badge { position: absolute; top: 12px; left: 12px; background: var(--orange); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.short-play-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .15s; }
+.short-inner:hover .short-play-overlay { opacity: 1; }
+.short-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+.short-meta { font-size: 12px; color: rgba(255,255,255,0.7); }
+
+/* ── VERIFIED BADGE ── */
+.verified { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; background: var(--orange); border-radius: 50%; margin-left: 4px; vertical-align: middle; flex-shrink: 0; }
+.verified svg { width: 9px; height: 9px; }
+
+/* ── THUMBNAIL UPLOAD ── */
+.thumb-upload-row { display: flex; align-items: center; gap: 12px; }
+.thumb-upload-preview { width: 120px; aspect-ratio: 16/9; background: var(--surface2); border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-med); }
+.thumb-upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+.short-toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+.short-toggle-row .slabel { font-size: 14px; font-weight: 500; }
+.short-toggle-row .sdesc { font-size: 12px; color: var(--text3); }
+
+/* ── WATCH HISTORY ── */
+#page-history .hist-empty { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 13px; }
+#page-history .hist-clear { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border-med); background: transparent; color: var(--text2); cursor: pointer; font-family: inherit; }
+#page-history .hist-clear:hover { background: var(--surface2); }
+
+/* ── PINNED COMMENT ── */
+.pinned-comment { background: var(--surface2); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px; border-left: 3px solid var(--orange); }
+.pinned-label { font-size: 11px; color: var(--orange); font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+
 /* ── WATCH PAGE ── */
 #watch-page { display: none; }
 #watch-page.active { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
@@ -386,6 +437,14 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
         My Channel
       </div>
+      <div class="nav-item" id="nav-shorts" onclick="showPage('shorts');loadShorts()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM15 14H9v-2h6v2zm0-4H9v-2h6v2z"/></svg>
+        Shorts
+      </div>
+      <div class="nav-item" id="nav-history" onclick="showHistory()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+        History
+      </div>
       <div class="nav-item" id="nav-following" onclick="showFollowing()" style="display:none">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
         Following
@@ -457,6 +516,21 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
           </select>
         </div>
         <div class="field"><label>tags</label><input type="text" id="up-tags" placeholder="comma separated: funny, cats, games"></div>
+        <div class="field">
+          <label>thumbnail</label>
+          <div class="thumb-upload-row">
+            <div class="thumb-upload-preview" id="thumb-upload-preview"><img id="thumb-upload-img" style="display:none"></div>
+            <div>
+              <input type="file" id="thumb-file-input" accept="image/*" style="display:none" onchange="handleThumbSelect(this.files[0])">
+              <button type="button" class="hbtn" onclick="document.getElementById('thumb-file-input').click()">choose image</button>
+              <div style="font-size:11px;color:var(--text3);margin-top:4px">optional · jpg, png, webp</div>
+            </div>
+          </div>
+        </div>
+        <div class="short-toggle-row">
+          <div><div class="slabel">upload as Short</div><div class="sdesc">vertical video · appears in ⚡ Shorts feed</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="up-is-short"><span class="toggle-slider"></span></label>
+        </div>
         <div class="form-err" id="upload-err"></div>
         <button class="btn-red" id="upload-submit-btn" onclick="submitUpload()">publish video</button>
       </div>
@@ -473,6 +547,22 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
         </div>
       </div>
       <div class="video-grid" id="channel-grid"></div>
+    </div>
+
+    <!-- SHORTS PAGE (fixed, outside .page system) -->
+    <div id="page-shorts">
+      <div id="shorts-feed">
+        <div style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 58px);color:var(--text3);font-size:13px">loading...</div>
+      </div>
+    </div>
+
+    <!-- HISTORY PAGE -->
+    <div class="page" id="page-history">
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>🕐 Watch History</span>
+        <button class="hist-clear" onclick="clearHistory()">clear history</button>
+      </div>
+      <div class="video-grid" id="history-grid"></div>
     </div>
 
     <!-- FOLLOWING PAGE -->
@@ -677,7 +767,7 @@ var userCache = {};
 async function loadUserCache(userIds) {
   var missing = userIds.filter(function(id){ return id && !userCache[id]; });
   if (!missing.length) return;
-  var rows = await sbGet('users?id=in.('+missing.join(',')+')'+'&select=id,username,pfp_url');
+  var rows = await sbGet('users?id=in.('+missing.join(',')+')'+'&select=id,username,pfp_url,is_verified');
   (rows||[]).forEach(function(u){ userCache[u.id] = u; });
 }
 
@@ -736,7 +826,7 @@ async function sbRpc(fn, params) {
 // ── SESSION ───────────────────────────────────────────────────────────────────
 function saveSession(u) { localStorage.setItem('pt_user', JSON.stringify(u)); currentUser = u; updateUserbar(); }
 function loadSession() { try { var s = localStorage.getItem('pt_user'); if(s){ currentUser=JSON.parse(s); updateUserbar(); } } catch(e){} }
-function logout() { localStorage.removeItem('pt_user'); currentUser=null; updateUserbar(); document.getElementById('nav-admin').style.display='none'; document.getElementById('nav-following').style.display='none'; document.getElementById('nav-inbox').style.display='none'; toast('logged out'); }
+function logout() { localStorage.removeItem('pt_user'); currentUser=null; updateUserbar(); document.getElementById('nav-admin').style.display='none'; document.getElementById('nav-following').style.display='none'; document.getElementById('nav-inbox').style.display='none'; document.getElementById('nav-history').style.display='none'; toast('logged out'); }
 
 function updateUserbar() {
   if (currentUser) {
@@ -747,6 +837,7 @@ function updateUserbar() {
     document.getElementById('nav-admin').style.display = isAdmin ? '' : 'none';
     document.getElementById('nav-following').style.display = '';
     document.getElementById('nav-inbox').style.display = '';
+    document.getElementById('nav-history').style.display = '';
     loadInboxBadge();
     var pfpHtml = currentUser.pfp_url
       ? '<div class="avatar" onclick="showMyChannel()" style="background:none;overflow:hidden;padding:0"><img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>'
@@ -825,7 +916,7 @@ function videoCardHtml(v) {
     +avatarHtml(v.user_id, v.username, 32, 'margin-top:2px;')
     +'<div class="video-card-info">'
     +'<div class="title">'+escHtml(v.title)+'</div>'
-    +'<div class="channel">'+escHtml(v.username||'Anonymous')+'</div>'
+    +'<div class="channel" style="display:flex;align-items:center;gap:2px">'+escHtml(v.username||'Anonymous')+(userCache[v.user_id]&&userCache[v.user_id].is_verified?verifiedBadge():'')+'</div>'
     +'<div class="stats">'+fmtNum(v.views||0)+' views &bull; '+fmtAgo(v.created_at)+'</div>'
     +'<span class="cat-badge" style="background:'+catColor+'22;color:'+catColor+'">'+escHtml(v.category||'general')+'</span>'
     +'</div></div></div>';
@@ -859,6 +950,7 @@ function filterCategory(cat, btn) {
 
 // ── WATCH ─────────────────────────────────────────────────────────────────────
 async function watchVideo(id) {
+  addToHistory(id);
   window.location.href = 'paltube-watch.html?v=' + id;
 }
 
@@ -871,6 +963,17 @@ function showPage(name) {
   document.getElementById('watch-page').style.display = 'none';
   document.getElementById('watch-page').classList.remove('active');
   document.getElementById('watch-video').src = '';
+
+  // hide/show shorts separately (fixed positioned)
+  var shortsEl = document.getElementById('page-shorts');
+  if (name === 'shorts') {
+    shortsEl.style.display = 'block';
+    document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+    document.getElementById('nav-shorts').classList.add('active');
+    return;
+  } else {
+    if (shortsEl) shortsEl.style.display = 'none';
+  }
 
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   var page = document.getElementById('page-'+name);
@@ -1012,24 +1115,40 @@ async function submitUpload() {
   if (!r.ok) { err.textContent='upload failed. try again.'; err.classList.add('show'); btn.disabled=false; btn.textContent='publish video'; return; }
 
   var videoUrl = STORAGE_URL+filename;
+
+  // upload thumbnail if selected
+  var thumbUrl = null;
+  if (selectedThumbFile) {
+    var tExt = selectedThumbFile.name.split('.').pop().toLowerCase();
+    var tName = 'thumb_'+Date.now()+'.'+tExt;
+    var tr = await fetch(SUPABASE_URL+'/storage/v1/object/paltube/'+tName, {
+      method:'POST', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':selectedThumbFile.type,'x-upsert':'true'}, body:selectedThumbFile
+    });
+    if (tr.ok) thumbUrl = STORAGE_URL+tName;
+  }
+
   var saved = await sbPost('pt_videos', {
     title: title,
     description: document.getElementById('up-desc').value.trim(),
     video_url: videoUrl,
+    thumbnail_url: thumbUrl,
     category: document.getElementById('up-category').value,
     tags: document.getElementById('up-tags').value.trim(),
     username: currentUser.username,
     user_id: currentUser.id,
+    is_short: document.getElementById('up-is-short').checked,
     views: 0, likes: 0
   });
 
   allVideos.unshift(saved);
   // notify followers
   sendUploadNotifications(saved);
-  selectedVideoFile = null;
+  selectedVideoFile = null; selectedThumbFile = null;
   document.getElementById('up-title').value='';
   document.getElementById('up-desc').value='';
   document.getElementById('up-tags').value='';
+  document.getElementById('up-is-short').checked=false;
+  document.getElementById('thumb-upload-img').style.display='none';
   document.getElementById('thumb-preview').style.display='none';
   document.getElementById('upload-drop').style.display='';
   btn.disabled=false; btn.textContent='publish video';
@@ -1338,6 +1457,88 @@ async function handlePfpSelect(file){
 var compactStyle=document.createElement('style');
 compactStyle.textContent='body.compact .video-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}body.compact .video-card-info .title{font-size:12px;}';
 document.head.appendChild(compactStyle);
+
+// ── VERIFIED BADGE ──────────────────────────────────────────────────────────────
+function verifiedBadge() {
+  return '<span class="verified" title="verified"><svg viewBox="0 0 10 10" fill="white"><polyline points="2,5 4,7 8,3" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+}
+function verifiedHtml(username, isVerified) {
+  return escHtml(username) + (isVerified ? verifiedBadge() : '');
+}
+
+// ── THUMBNAIL SELECT ──────────────────────────────────────────────────────────
+var selectedThumbFile = null;
+function handleThumbSelect(file) {
+  if (!file) return;
+  selectedThumbFile = file;
+  var img = document.getElementById('thumb-upload-img');
+  var reader = new FileReader();
+  reader.onload = function(e){ img.src=e.target.result; img.style.display=''; };
+  reader.readAsDataURL(file);
+}
+
+// ── SHORTS ────────────────────────────────────────────────────────────────────
+var shortsLoaded = false;
+function loadShorts() {
+  if (shortsLoaded) return;
+  shortsLoaded = true;
+  var shorts = allVideos.filter(function(v){ return v.is_short; });
+  var feed = document.getElementById('shorts-feed');
+  if (!shorts.length) {
+    feed.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:calc(100vh - 58px);color:var(--text3);font-size:13px;text-align:center">no shorts yet.<br>Upload a vertical video and check "upload as Short"!</div>';
+    return;
+  }
+  feed.innerHTML = '';
+  shorts.forEach(function(v){
+    var card = document.createElement('div'); card.className='short-card';
+    var inner = document.createElement('div'); inner.className='short-inner';
+    inner.onclick = function(){ addToHistory(v.id); window.location.href='paltube-watch.html?v='+v.id; };
+    var media = v.thumbnail_url
+      ? Object.assign(document.createElement('img'),{src:v.thumbnail_url,loading:'lazy'})
+      : Object.assign(document.createElement('video'),{src:v.video_url+'#t=1',preload:'metadata',muted:true});
+    var badge = document.createElement('span'); badge.className='short-badge'; badge.textContent='SHORT';
+    var playOvr = document.createElement('div'); playOvr.className='short-play-overlay';
+    playOvr.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.25)"/><polygon points="10,8 18,12 10,16" fill="white"/></svg>';
+    var overlay = document.createElement('div'); overlay.className='short-overlay';
+    overlay.innerHTML='<div class="short-title">'+escHtml(v.title)+'</div>'
+      +'<div class="short-meta">'+escHtml(v.username||'')+' &bull; '+fmtNum(v.views||0)+' views</div>';
+    inner.appendChild(media); inner.appendChild(badge); inner.appendChild(playOvr); inner.appendChild(overlay);
+    card.appendChild(inner);
+    feed.appendChild(card);
+  });
+}
+
+// ── WATCH HISTORY ─────────────────────────────────────────────────────────────
+var HIST_KEY = 'pt_hist';
+function getHistory() { try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]');}catch(e){return[];} }
+function addToHistory(videoId) {
+  var hist = getHistory().filter(function(id){return id!==videoId;});
+  hist.unshift(videoId);
+  if (hist.length > 100) hist = hist.slice(0,100);
+  localStorage.setItem(HIST_KEY, JSON.stringify(hist));
+  // also save to supabase if logged in
+  if (currentUser) {
+    fetch(SUPABASE_URL+'/rest/v1/pt_watch_history', {
+      method:'POST', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({user_id:currentUser.id,video_id:videoId})
+    }).catch(function(){});
+  }
+}
+function showHistory() {
+  if (!currentUser) { openAuth('login'); return; }
+  showPage('history');
+  document.getElementById('nav-history').classList.add('active');
+  var hist = getHistory();
+  var grid = document.getElementById('history-grid');
+  if (!hist.length) { grid.innerHTML='<div class="hist-empty">no watch history yet.<br>Videos you watch will appear here.</div>'; return; }
+  var vids = hist.map(function(id){ return allVideos.find(function(v){return v.id===id;}); }).filter(Boolean);
+  renderGrid('history-grid', vids);
+}
+function clearHistory() {
+  localStorage.removeItem(HIST_KEY);
+  document.getElementById('history-grid').innerHTML='<div class="hist-empty">history cleared.</div>';
+  toast('watch history cleared');
+}
 
 // ── FOLLOWING ─────────────────────────────────────────────────────────────────
 var FOLLOWED_KEY = 'pt_followed';
