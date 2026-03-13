@@ -676,12 +676,20 @@ function goToChannel() {
 }
 
 // ── FOLLOW ──
-function toggleFollow() {
+async function toggleFollow() {
   if (!currentVideo) return;
+  if (!currentUser) { openAuth('login'); return; }
   var uid = String(currentVideo.user_id);
   var idx = followedChannels.indexOf(uid);
-  if (idx !== -1) { followedChannels.splice(idx,1); isFollowing=false; toast('unfollowed '+currentVideo.username); }
-  else { followedChannels.push(uid); isFollowing=true; toast('following '+currentVideo.username+'!'); }
+  if (idx !== -1) {
+    followedChannels.splice(idx,1); isFollowing=false;
+    try { await sbDelete('pt_follows','follower_id=eq.'+currentUser.id+'&following_id=eq.'+currentVideo.user_id); } catch(e){}
+    toast('unfollowed '+currentVideo.username);
+  } else {
+    followedChannels.push(uid); isFollowing=true;
+    try { await sbPost('pt_follows',{follower_id:currentUser.id,following_id:currentVideo.user_id}); } catch(e){}
+    toast('following '+currentVideo.username+'! 🎉');
+  }
   localStorage.setItem(FOLLOWED_KEY, JSON.stringify(followedChannels));
   updateFollowBtn();
 }
