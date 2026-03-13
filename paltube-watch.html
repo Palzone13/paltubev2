@@ -328,4 +328,508 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
   <div id="share-box">
     <h3>share video</h3>
     <input type="text" id="share-url" readonly onclick="this.select()">
-    <button class="share-copy-btn" onclick="copyShareUrl()">copy li
+    <button class="share-copy-btn" onclick="copyShareUrl()">copy link</button>
+    <button class="share-close" onclick="closeShare()">close</button>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div id="report-modal" onclick="if(event.target===this)closeReport()">
+  <div id="report-box">
+    <h3>report video</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">describe the issue and our moderators will review it.</p>
+    <textarea id="report-reason" placeholder="spam, illegal content, harassment..."></textarea>
+    <div id="report-err"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn-orange" onclick="submitReport()" style="flex:1">submit</button>
+      <button onclick="closeReport()" style="flex:1;background:var(--surface2);border:none;border-radius:var(--radius-sm);color:var(--text2);font-size:14px;cursor:pointer;font-family:inherit">cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" onclick="if(event.target===this)closeSettings()">
+  <div id="settings-box">
+    <h2>settings <button onclick="closeSettings()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;line-height:1">✕</button></h2>
+    <div class="settings-section" id="settings-pfp-section" style="display:none">
+      <div class="settings-section-label">profile picture</div>
+      <div class="pfp-upload-wrap">
+        <div class="pfp-preview" id="settings-pfp-preview">?</div>
+        <div>
+          <input type="file" id="pfp-file-input" accept="image/*" style="display:none" onchange="handlePfpSelect(this.files[0])">
+          <button class="pfp-upload-btn" onclick="document.getElementById('pfp-file-input').click()">upload image</button>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">jpg, png, webp — max 5MB</div>
+          <div class="pfp-progress" id="pfp-progress">uploading...</div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section" id="settings-bio-section" style="display:none">
+      <div class="settings-section-label">bio</div>
+      <textarea id="settings-bio" placeholder="tell people about yourself..." style="width:100%;background:var(--surface2);border:1px solid var(--border-med);border-radius:var(--radius-sm);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:vertical;height:80px;outline:none;box-sizing:border-box"></textarea>
+      <button onclick="saveBio()" style="margin-top:8px;padding:7px 18px;border-radius:var(--radius-sm);border:none;background:var(--orange);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">save bio</button>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-label">language</div>
+      <div class="lang-grid" id="lang-grid"></div>
+    </div>
+    <button onclick="closeSettings()" style="width:100%;padding:9px;border-radius:var(--radius-sm);border:1px solid var(--border-med);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">close</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" onclick="if(event.target===this)closeAuth()">
+  <div id="auth-box">
+    <h2>welcome to paltube</h2>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">log in</button>
+      <button class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">register</button>
+    </div>
+    <div id="auth-login">
+      <div class="field"><label>username</label><input type="text" id="login-user" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="field"><label>password</label><input type="password" id="login-pass" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="form-err" id="login-err"></div>
+      <button class="btn-orange" onclick="doLogin()">log in</button>
+    </div>
+    <div id="auth-register" style="display:none">
+      <div class="field"><label>username</label><input type="text" id="reg-user"></div>
+      <div class="field"><label>password</label><input type="password" id="reg-pass"></div>
+      <div class="field"><label>confirm password</label><input type="password" id="reg-pass2"></div>
+      <div class="form-err" id="reg-err"></div>
+      <button class="btn-orange" onclick="doRegister()">register</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+var SUPABASE_URL = 'https://actpttkngkmjmzhukxva.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_c7jHjcNicXKabcFPCzKjyA_ViTc0-ti';
+var STORAGE_URL  = SUPABASE_URL + '/storage/v1/object/public/paltube/';
+
+var currentVideo = null;
+var currentUser  = null;
+var allVideos    = [];
+var isFollowing  = false;
+var hasLiked     = false;
+
+var SESSION_ID = localStorage.getItem('pt_session');
+if (!SESSION_ID) { SESSION_ID = Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem('pt_session', SESSION_ID); }
+
+var FOLLOWED_KEY = 'pt_followed';
+var followedChannels = JSON.parse(localStorage.getItem(FOLLOWED_KEY)||'[]');
+
+var CAT_COLORS = { general:'#888',gaming:'#7c3aed',music:'#db2777',tech:'#2563eb',comedy:'#d97706',education:'#059669',news:'#dc2626',sports:'#ea580c',art:'#9333ea',vlog:'#0891b2' };
+
+// ── SUPABASE ──
+async function sbGet(path) {
+  var r = await fetch(SUPABASE_URL+'/rest/v1/'+path, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY } });
+  return r.json();
+}
+async function sbPost(table, body) {
+  var r = await fetch(SUPABASE_URL+'/rest/v1/'+table, {
+    method:'POST', headers:{ 'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation' },
+    body: JSON.stringify(body)
+  });
+  var d = await r.json(); return Array.isArray(d) ? d[0] : d;
+}
+async function sbPatch(table, id, body) {
+  await fetch(SUPABASE_URL+'/rest/v1/'+table+'?id=eq.'+id, {
+    method:'PATCH', headers:{ 'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+async function sbDelete(table, query) {
+  await fetch(SUPABASE_URL+'/rest/v1/'+table+'?'+query, { method:'DELETE', headers:{ 'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY } });
+}
+
+// ── SESSION ──
+function saveSession(u) { localStorage.setItem('pt_user',JSON.stringify(u)); currentUser=u; updateUserbar(); }
+function loadSession() { try { var s=localStorage.getItem('pt_user'); if(s){currentUser=JSON.parse(s);updateUserbar();} } catch(e){} }
+function logout() { localStorage.removeItem('pt_user'); currentUser=null; updateUserbar(); toast('logged out'); }
+
+function updateUserbar() {
+  if (currentUser) {
+    document.getElementById('userbar-guest').style.display='none';
+    var el=document.getElementById('userbar-loggedin'); el.style.display='flex';
+    var pfpHtml = currentUser.pfp_url
+      ? '<div class="avatar" style="background:none;overflow:hidden;padding:0"><img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>'
+      : '<div class="avatar">'+escHtml(currentUser.username[0].toUpperCase())+'</div>';
+    el.innerHTML = '<span style="font-size:13px;color:var(--text2);cursor:pointer" onclick="goToMyProfile()">'+escHtml(currentUser.username)+'</span>'
+      + pfpHtml
+      + '<button class="hbtn" onclick="logout()">log out</button>';
+    document.getElementById('comment-avatar').textContent = currentUser.username[0].toUpperCase();
+    document.getElementById('comment-avatar').style.background = var_orange();
+  } else {
+    document.getElementById('userbar-guest').style.display='';
+    document.getElementById('userbar-loggedin').style.display='none';
+    document.getElementById('comment-avatar').textContent = '?';
+    document.getElementById('comment-avatar').style.background = 'var(--surface3)';
+  }
+}
+function goToMyProfile() {
+  if (currentUser) window.location.href = 'paltube-user.html?u=' + currentUser.id;
+}
+function var_orange() { return '#e85d00'; }
+
+// ── AUTH ──
+function openAuth(tab) { document.getElementById('auth-modal').classList.add('open'); switchAuthTab(tab||'login'); }
+function closeAuth() { document.getElementById('auth-modal').classList.remove('open'); }
+function switchAuthTab(tab) {
+  document.getElementById('auth-login').style.display=tab==='login'?'':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'':'none';
+  document.getElementById('tab-login-btn').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register-btn').classList.toggle('active',tab==='register');
+}
+async function doLogin() {
+  var u=document.getElementById('login-user').value.trim(), p=document.getElementById('login-pass').value;
+  var err=document.getElementById('login-err'); err.classList.remove('show');
+  if(!u||!p){err.textContent='fill in all fields.';err.classList.add('show');return;}
+  var rows=await sbGet('users?username=eq.'+encodeURIComponent(u)+'&select=id,username,password,created_at');
+  if(!rows||!rows.length){err.textContent='user not found.';err.classList.add('show');return;}
+  if(rows[0].password!==btoa(p)){err.textContent='wrong password.';err.classList.add('show');return;}
+  saveSession({id:rows[0].id,username:rows[0].username,created_at:rows[0].created_at});
+  closeAuth(); toast('welcome back, '+rows[0].username+'!');
+  if (currentVideo) checkLikeState(currentVideo.id);
+}
+async function doRegister() {
+  var u=document.getElementById('reg-user').value.trim(), p=document.getElementById('reg-pass').value, p2=document.getElementById('reg-pass2').value;
+  var err=document.getElementById('reg-err'); err.classList.remove('show');
+  if(!u||!p){err.textContent='fill in all fields.';err.classList.add('show');return;}
+  if(u.length<3){err.textContent='username must be 3+ chars.';err.classList.add('show');return;}
+  if(p.length<4){err.textContent='password must be 4+ chars.';err.classList.add('show');return;}
+  if(p!==p2){err.textContent='passwords do not match.';err.classList.add('show');return;}
+  var ex=await sbGet('users?username=eq.'+encodeURIComponent(u)+'&select=id');
+  if(ex&&ex.length){err.textContent='username taken.';err.classList.add('show');return;}
+  var saved=await sbPost('users',{username:u,password:btoa(p)});
+  if(!saved||!saved.id){err.textContent='error creating account.';err.classList.add('show');return;}
+  saveSession({id:saved.id,username:saved.username,created_at:saved.created_at});
+  closeAuth(); toast('welcome, '+saved.username+'!');
+}
+
+// ── LOAD VIDEO ──
+async function init() {
+  loadSession();
+  var params = new URLSearchParams(window.location.search);
+  var videoId = parseInt(params.get('v'));
+
+  // load all videos for related
+  var rows = await sbGet('pt_videos?order=created_at.desc');
+  allVideos = rows || [];
+
+  if (!videoId) {
+    // no video id — show latest
+    if (allVideos.length) loadVideo(allVideos[0]);
+    else document.getElementById('video-title').textContent = 'no videos found';
+    return;
+  }
+  var v = allVideos.find(function(x){ return x.id===videoId; });
+  if (v) loadVideo(v);
+  else {
+    // fetch directly
+    var direct = await sbGet('pt_videos?id=eq.'+videoId);
+    if (direct && direct.length) { allVideos.unshift(direct[0]); loadVideo(direct[0]); }
+    else document.getElementById('video-title').textContent = 'video not found';
+  }
+}
+
+function loadVideo(v) {
+  currentVideo = v;
+  document.title = v.title + ' — paltube';
+
+  // player
+  var vid = document.getElementById('main-video');
+  vid.src = v.video_url;
+  document.getElementById('player-wrap').classList.remove('loading');
+
+  // title
+  var titleEl = document.getElementById('video-title');
+  titleEl.textContent = v.title;
+  titleEl.className = '';
+
+  // stats
+  document.getElementById('view-count').textContent = fmtNum((v.views||0)+1)+' views';
+  document.getElementById('upload-date').textContent = fmtAgo(v.created_at);
+  var cb = document.getElementById('cat-badge');
+  cb.textContent = v.category||'general';
+  var catColor = CAT_COLORS[v.category]||'#888';
+  cb.style.background = catColor+'22'; cb.style.color = catColor;
+
+  // channel
+  var initials = (v.username||'?')[0].toUpperCase();
+  document.getElementById('channel-avatar').textContent = initials;
+  document.getElementById('channel-avatar').style.background = catColor;
+  document.getElementById('channel-name').textContent = v.username||'Anonymous';
+  var chanVids = allVideos.filter(function(x){ return x.user_id===v.user_id; });
+  document.getElementById('channel-meta').textContent = chanVids.length+' video'+(chanVids.length!==1?'s':'');
+
+  // follow state
+  isFollowing = followedChannels.indexOf(String(v.user_id)) !== -1;
+  updateFollowBtn();
+
+  // description
+  var desc = v.description || 'No description provided.';
+  document.getElementById('desc-preview').textContent = desc.slice(0,120)+(desc.length>120?'...':'');
+  document.getElementById('desc-full').textContent = desc;
+  document.getElementById('desc-box').classList.add('collapsed');
+  document.getElementById('desc-toggle-text').textContent = 'show more';
+
+  // tags
+  var tags = (v.tags||'').split(',').map(function(t){return t.trim();}).filter(Boolean);
+  document.getElementById('desc-tags').innerHTML = tags.map(function(t){
+    return '<span class="tag-pill">#'+escHtml(t)+'</span>';
+  }).join('');
+
+  // like state
+  document.getElementById('like-count').textContent = fmtNum(v.likes||0);
+  hasLiked = false;
+  checkLikeState(v.id);
+
+  // increment view
+  sbPatch('pt_videos', v.id, { views: (v.views||0)+1 });
+
+  // related
+  renderRelated(v);
+
+  // comments
+  loadComments(v.id);
+
+  // share url
+  document.getElementById('share-url').value = window.location.origin + window.location.pathname + '?v=' + v.id;
+}
+
+// ── RELATED ──
+function renderRelated(current) {
+  var list = allVideos.filter(function(v){ return v.id!==current.id; }).slice(0,12);
+  if (!list.length) { document.getElementById('related-list').innerHTML='<div style="color:var(--text3);font-size:13px">no other videos yet.</div>'; return; }
+  document.getElementById('related-list').innerHTML = list.map(function(v){
+    return '<div class="related-card" onclick="navigateTo('+v.id+')">'
+      +'<div class="related-thumb">'
+      +(v.thumbnail_url ? '<img src="'+escHtml(v.thumbnail_url)+'" loading="lazy">' : '<video src="'+escHtml(v.video_url)+'#t=2" preload="metadata" muted></video>')
+      +'</div>'
+      +'<div class="related-info">'
+      +'<div class="related-title">'+escHtml(v.title)+'</div>'
+      +'<div class="related-channel">'+escHtml(v.username||'Anonymous')+'</div>'
+      +'<div class="related-stats">'+fmtNum(v.views||0)+' views &bull; '+fmtAgo(v.created_at)+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function navigateTo(id) {
+  window.location.href = 'paltube-watch.html?v='+id;
+}
+
+function goToChannel() {
+  if (currentVideo) window.location.href = 'paltube-user.html?u='+currentVideo.user_id;
+}
+
+// ── FOLLOW ──
+function toggleFollow() {
+  if (!currentVideo) return;
+  var uid = String(currentVideo.user_id);
+  var idx = followedChannels.indexOf(uid);
+  if (idx !== -1) { followedChannels.splice(idx,1); isFollowing=false; toast('unfollowed '+currentVideo.username); }
+  else { followedChannels.push(uid); isFollowing=true; toast('following '+currentVideo.username+'!'); }
+  localStorage.setItem(FOLLOWED_KEY, JSON.stringify(followedChannels));
+  updateFollowBtn();
+}
+function updateFollowBtn() {
+  var btn = document.getElementById('follow-btn');
+  btn.textContent = isFollowing ? 'Following ✓' : 'Follow';
+  btn.classList.toggle('following', isFollowing);
+}
+
+// ── LIKE ──
+async function checkLikeState(videoId) {
+  try {
+    var r = await sbGet('pt_likes?video_id=eq.'+videoId+'&session_id=eq.'+SESSION_ID+'&select=id');
+    hasLiked = r && r.length > 0;
+    updateLikeBtn();
+  } catch(e){}
+}
+async function toggleLike() {
+  if (!currentVideo) return;
+  var id = currentVideo.id;
+  if (hasLiked) {
+    await sbDelete('pt_likes','video_id=eq.'+id+'&session_id=eq.'+SESSION_ID);
+    currentVideo.likes = Math.max(0,(currentVideo.likes||0)-1);
+    hasLiked = false;
+  } else {
+    try { await sbPost('pt_likes',{video_id:id,session_id:SESSION_ID}); } catch(e){}
+    currentVideo.likes = (currentVideo.likes||0)+1;
+    hasLiked = true;
+  }
+  await sbPatch('pt_videos', id, { likes: currentVideo.likes });
+  document.getElementById('like-count').textContent = fmtNum(currentVideo.likes);
+  updateLikeBtn();
+}
+function updateLikeBtn() {
+  var btn = document.getElementById('like-btn');
+  btn.classList.toggle('active', hasLiked);
+  btn.querySelector('span').textContent = fmtNum(currentVideo ? (currentVideo.likes||0) : 0);
+}
+
+// ── DESCRIPTION ──
+function toggleDesc() {
+  var box = document.getElementById('desc-box');
+  var collapsed = box.classList.toggle('collapsed');
+  document.getElementById('desc-toggle-text').textContent = collapsed ? 'show more' : 'show less';
+}
+
+// ── COMMENTS ──
+async function loadComments(videoId) {
+  var rows = await sbGet('pt_comments?video_id=eq.'+videoId+'&order=created_at.desc');
+  var list = rows||[];
+  document.getElementById('comments-heading').textContent = list.length+' Comment'+(list.length!==1?'s':'');
+  if (!list.length) { document.getElementById('comments-list').innerHTML='<div class="no-comments">no comments yet — be the first!</div>'; return; }
+  document.getElementById('comments-list').innerHTML = list.map(function(c){
+    var init=(c.username||'?')[0].toUpperCase();
+    return '<div class="comment">'
+      +'<div class="comment-avatar-sm">'+escHtml(init)+'</div>'
+      +'<div class="comment-body">'
+      +'<div class="comment-header"><span class="comment-name">'+escHtml(c.username||'Anonymous')+'</span><span class="comment-time">'+fmtAgo(c.created_at)+'</span></div>'
+      +'<div class="comment-text">'+escHtml(c.body)+'</div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function showCommentActions() { document.getElementById('comment-actions').style.display='flex'; }
+function scheduleHideActions() { setTimeout(function(){ hideCommentActions(); },200); }
+function hideCommentActions() { document.getElementById('comment-actions').style.display='none'; document.getElementById('comment-input').value=''; }
+
+async function postComment() {
+  if (!currentVideo) return;
+  var inp=document.getElementById('comment-input');
+  var text=inp.value.trim();
+  if(!text) return;
+  await sbPost('pt_comments',{
+    video_id: currentVideo.id,
+    body: text,
+    username: currentUser ? currentUser.username : 'Anonymous',
+    user_id: currentUser ? currentUser.id : null
+  });
+  inp.value='';
+  document.getElementById('comment-actions').style.display='none';
+  loadComments(currentVideo.id);
+  toast('comment posted!');
+}
+
+// ── SHARE ──
+function openShare() { document.getElementById('share-modal').classList.add('open'); }
+function closeShare() { document.getElementById('share-modal').classList.remove('open'); }
+function copyShareUrl() {
+  var url=document.getElementById('share-url');
+  url.select(); document.execCommand('copy');
+  toast('link copied!'); closeShare();
+}
+
+// ── REPORT ──
+function openReport() { document.getElementById('report-modal').classList.add('open'); document.getElementById('report-reason').value=''; document.getElementById('report-err').textContent=''; }
+function closeReport() { document.getElementById('report-modal').classList.remove('open'); }
+async function submitReport() {
+  var reason=document.getElementById('report-reason').value.trim();
+  if(!reason){document.getElementById('report-err').textContent='please enter a reason.';return;}
+  await sbPost('pt_reports',{
+    video_id: currentVideo ? currentVideo.id : null,
+    reason: reason,
+    reporter_name: currentUser ? currentUser.username : 'Anonymous'
+  });
+  closeReport(); toast('report submitted. thanks!');
+}
+
+// ── UTILS ──
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtNum(n){if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n;}
+function fmtAgo(ts){
+  var diff=(Date.now()-new Date(ts).getTime())/1000;
+  if(diff<60)return'just now';if(diff<3600)return Math.floor(diff/60)+'m ago';
+  if(diff<86400)return Math.floor(diff/3600)+'h ago';if(diff<2592000)return Math.floor(diff/86400)+'d ago';
+  return Math.floor(diff/2592000)+'mo ago';
+}
+var toastTimer;
+function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2800);}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+var LANGUAGES = [
+  {code:'en',flag:'🇺🇸',name:'English'},{code:'es',flag:'🇪🇸',name:'Español'},
+  {code:'fr',flag:'🇫🇷',name:'Français'},{code:'de',flag:'🇩🇪',name:'Deutsch'},
+  {code:'pt',flag:'🇧🇷',name:'Português'},{code:'ja',flag:'🇯🇵',name:'日本語'},
+  {code:'zh',flag:'🇨🇳',name:'中文'},{code:'ar',flag:'🇸🇦',name:'العربية'},
+  {code:'ru',flag:'🇷🇺',name:'Русский'},{code:'ko',flag:'🇰🇷',name:'한국어'},
+];
+var currentLang = localStorage.getItem('pt_lang')||'en';
+function applyLang(code){
+  currentLang=code; localStorage.setItem('pt_lang',code);
+  document.querySelectorAll('.lang-btn').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-lang')===code);});
+  if(code==='ar') document.body.setAttribute('dir','rtl'); else document.body.removeAttribute('dir');
+}
+function renderLangGrid() {
+  var grid = document.getElementById('lang-grid');
+  grid.innerHTML = '';
+  LANGUAGES.forEach(function(l){
+    var btn = document.createElement('button');
+    btn.className = 'lang-btn' + (currentLang===l.code ? ' active' : '');
+    btn.setAttribute('data-lang', l.code);
+    btn.innerHTML = '<span class="lang-flag">'+l.flag+'</span>'+l.name;
+    btn.onclick = function(){ applyLang(l.code); };
+    grid.appendChild(btn);
+  });
+}
+function openSettings(){
+  renderLangGrid();
+  if(currentUser){
+    document.getElementById('settings-pfp-section').style.display='';
+    document.getElementById('settings-bio-section').style.display='';
+    document.getElementById('settings-bio').value=currentUser.bio||'';
+    refreshPfpPreview();
+  } else {
+    document.getElementById('settings-pfp-section').style.display='none';
+    document.getElementById('settings-bio-section').style.display='none';
+  }
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+async function saveBio(){
+  if(!currentUser)return;
+  var bio=document.getElementById('settings-bio').value.trim();
+  await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+currentUser.id,{
+    method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({bio:bio})
+  });
+  currentUser.bio=bio; saveSession(currentUser);
+  toast('bio saved!');
+}
+function refreshPfpPreview(){
+  var prev=document.getElementById('settings-pfp-preview');
+  if(currentUser&&currentUser.pfp_url) prev.innerHTML='<img src="'+escHtml(currentUser.pfp_url)+'">';
+  else if(currentUser){prev.textContent=currentUser.username[0].toUpperCase();prev.style.background='var(--orange)';}
+}
+async function handlePfpSelect(file){
+  if(!file)return;
+  if(file.size>5*1024*1024){toast('image too large — max 5MB');return;}
+  var prog=document.getElementById('pfp-progress'); prog.classList.add('show');
+  var ext=file.name.split('.').pop().toLowerCase();
+  var filename='pfp_'+currentUser.id+'_'+Date.now()+'.'+ext;
+  var r=await fetch(SUPABASE_URL+'/storage/v1/object/avatars/'+filename,{
+    method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type,'x-upsert':'true'},body:file
+  });
+  prog.classList.remove('show');
+  if(!r.ok){toast('upload failed');return;}
+  var pfpUrl=SUPABASE_URL+'/storage/v1/object/public/avatars/'+filename;
+  await fetch(SUPABASE_URL+'/rest/v1/users?id=eq.'+currentUser.id,{
+    method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({pfp_url:pfpUrl})
+  });
+  currentUser.pfp_url=pfpUrl; saveSession(currentUser);
+  refreshPfpPreview(); updateUserbar(); toast('profile picture updated! 🎉');
+}
+applyLang(currentLang);
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){closeAuth();closeShare();closeReport();}
+});
+
+init();
+</script>
+</body>
+</html>
