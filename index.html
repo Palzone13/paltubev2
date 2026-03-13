@@ -26,6 +26,20 @@
   --radius-sm: 6px;
   --radius-lg: 14px;
 }
+body.light {
+  --orange-light: #fff0e6;
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --surface2: #efefef;
+  --surface3: #e0e0e0;
+  --border: rgba(0,0,0,0.08);
+  --border-med: rgba(0,0,0,0.15);
+  --text: #111111;
+  --text2: #555555;
+  --text3: #999999;
+}
+body.light #header { background: rgba(244,244,244,0.92); }
+body.light .video-thumb, body.light .related-thumb { background: #e0e0e0; }
 
 body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
 
@@ -506,6 +520,10 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
     </div>
     <div class="settings-section">
       <div class="settings-section-label">display</div>
+      <div class="settings-row">
+        <div class="settings-row-info"><div class="slabel">light mode</div><div class="sdesc">switch to light theme</div></div>
+        <label class="toggle-switch"><input type="checkbox" id="setting-theme" onchange="applyTheme(this.checked)"><span class="toggle-slider"></span></label>
+      </div>
       <div class="settings-row">
         <div class="settings-row-info"><div class="slabel">compact view</div><div class="sdesc">show smaller video cards</div></div>
         <label class="toggle-switch"><input type="checkbox" id="setting-compact" onchange="applyCompact(this.checked)"><span class="toggle-slider"></span></label>
@@ -1184,6 +1202,7 @@ function renderLangGrid() {
 function openSettings() {
   renderLangGrid();
   document.getElementById('setting-compact').checked = document.body.classList.contains('compact');
+  document.getElementById('setting-theme').checked = document.body.classList.contains('light');
   if(currentUser){
     document.getElementById('settings-pfp-section').style.display='';
     document.getElementById('settings-bio-section').style.display='';
@@ -1207,6 +1226,7 @@ async function saveBio(){
   toast('bio saved!');
 }
 function applyCompact(on){document.body.classList.toggle('compact',on);localStorage.setItem('pt_compact',on?'1':'0');}
+function applyTheme(light){document.body.classList.toggle('light',light);localStorage.setItem('pt_theme',light?'light':'dark');}
 
 function refreshPfpPreview(){
   var prev=document.getElementById('settings-pfp-preview');
@@ -1241,6 +1261,7 @@ document.head.appendChild(compactStyle);
 
 loadSession();
 if(localStorage.getItem('pt_compact')==='1') document.body.classList.add('compact');
+if(localStorage.getItem('pt_theme')==='light') document.body.classList.add('light');
 applyLang(currentLang);
 loadVideos();
 </script>
