@@ -768,57 +768,7 @@ function filterCategory(cat, btn) {
 
 // ── WATCH ─────────────────────────────────────────────────────────────────────
 async function watchVideo(id) {
-  var v = allVideos.find(function(x){ return x.id===id; });
-  if (!v) return;
-  currentVideo = v;
-
-  // show watch layout
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('watch-page').classList.add('active');
-  document.getElementById('watch-page').style.display = 'grid';
-
-  document.getElementById('watch-video').src = v.video_url;
-  document.getElementById('watch-title').textContent = v.title;
-  document.getElementById('watch-channel-avatar').textContent = (v.username||'?')[0].toUpperCase();
-  document.getElementById('watch-channel-avatar').style.background = CAT_COLORS[v.category]||'#888';
-  document.getElementById('watch-channel-name').textContent = v.username||'Anonymous';
-  document.getElementById('watch-views').textContent = fmtNum((v.views||0)+1)+' views';
-  document.getElementById('watch-date').textContent = fmtAgo(v.created_at);
-  document.getElementById('watch-cat').textContent = v.category||'general';
-  document.getElementById('watch-desc').textContent = v.description||'No description.';
-
-  var tags = (v.tags||'').split(',').map(function(t){ return t.trim(); }).filter(Boolean);
-  document.getElementById('watch-tags').innerHTML = tags.map(function(t){ return '<span class="tag-pill" onclick="searchTag(\''+escHtml(t)+'\')">'+escHtml(t)+'</span>'; }).join('');
-
-  // like state
-  likedVideos[id] = false;
-  try {
-    var lr = await sbGet('pt_likes?video_id=eq.'+id+'&session_id=eq.'+SESSION_ID+'&select=id');
-    likedVideos[id] = lr && lr.length > 0;
-  } catch(e){}
-  updateLikeBtn(v.likes||0);
-
-  // channel video count
-  var chanVids = allVideos.filter(function(x){ return x.user_id===v.user_id; });
-  document.getElementById('watch-channel-stats').textContent = chanVids.length+' video'+(chanVids.length!==1?'s':'');
-
-  // queue
-  var queue = allVideos.filter(function(x){ return x.id!==id; }).slice(0,10);
-  document.getElementById('queue-list').innerHTML = queue.map(function(q){
-    return '<div class="queue-item" onclick="watchVideo('+q.id+')">'
-      +'<div class="queue-thumb"><video src="'+escHtml(q.video_url)+'#t=2" preload="metadata" muted></video></div>'
-      +'<div class="queue-info"><div class="q-title">'+escHtml(q.title)+'</div><div class="q-channel">'+escHtml(q.username||'Anon')+'</div><div class="q-stats">'+fmtNum(q.views||0)+' views</div></div>'
-      +'</div>';
-  }).join('');
-
-  // increment view
-  sbPatch('pt_videos', id, { views: (v.views||0)+1 });
-  v.views = (v.views||0)+1;
-
-  // load comments
-  loadComments(id);
-
-  window.scrollTo(0,0);
+  window.location.href = 'paltube-watch.html?v=' + id;
 }
 
 function openChannelById() {
