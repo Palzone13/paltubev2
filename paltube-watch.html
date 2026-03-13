@@ -429,6 +429,24 @@ var SUPABASE_KEY = 'sb_publishable_c7jHjcNicXKabcFPCzKjyA_ViTc0-ti';
 var STORAGE_URL  = SUPABASE_URL + '/storage/v1/object/public/paltube/';
 
 var currentVideo = null;
+var userCache = {};
+
+async function loadUserCache(userIds) {
+  var missing = userIds.filter(function(id){ return id && !userCache[id]; });
+  if (!missing.length) return;
+  var rows = await sbGet('users?id=in.('+missing.join(',')+')'+'&select=id,username,pfp_url');
+  (rows||[]).forEach(function(u){ userCache[u.id] = u; });
+}
+
+function avatarHtml(userId, username, size, extra) {
+  var u = userCache[userId];
+  var pfp = u && u.pfp_url;
+  var init = (username||'?')[0].toUpperCase();
+  var sz = size||32;
+  var s = 'width:'+sz+'px;height:'+sz+'px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:'+(sz*0.38|0)+'px;'+(extra||'');
+  if (pfp) return '<div style="'+s+'background:none"><img src="'+escHtml(pfp)+'" style="width:100%;height:100%;object-fit:cover"></div>';
+  return '<div style="'+s+'background:var(--orange)">'+init+'</div>';
+}
 var currentUser  = null;
 var allVideos    = [];
 var isFollowing  = false;
@@ -479,8 +497,14 @@ function updateUserbar() {
     el.innerHTML = '<span style="font-size:13px;color:var(--text2);cursor:pointer" onclick="goToMyProfile()">'+escHtml(currentUser.username)+'</span>'
       + pfpHtml
       + '<button class="hbtn" onclick="logout()">log out</button>';
-    document.getElementById('comment-avatar').textContent = currentUser.username[0].toUpperCase();
-    document.getElementById('comment-avatar').style.background = var_orange();
+    var cmtAvEl = document.getElementById('comment-avatar');
+    if (currentUser.pfp_url) {
+      cmtAvEl.innerHTML = '<img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+      cmtAvEl.style.background = 'none';
+    } else {
+      cmtAvEl.textContent = currentUser.username[0].toUpperCase();
+      cmtAvEl.style.background = var_orange();
+    }
   } else {
     document.getElementById('userbar-guest').style.display='';
     document.getElementById('userbar-loggedin').style.display='none';
@@ -577,9 +601,16 @@ function loadVideo(v) {
   cb.style.background = catColor+'22'; cb.style.color = catColor;
 
   // channel
-  var initials = (v.username||'?')[0].toUpperCase();
-  document.getElementById('channel-avatar').textContent = initials;
-  document.getElementById('channel-avatar').style.background = catColor;
+  await loadUserCache([v.user_id]);
+  var chanU = userCache[v.user_id];
+  var chanAvEl = document.getElementById('channel-avatar');
+  if (chanU && chanU.pfp_url) {
+    chanAvEl.innerHTML = '<img src="'+escHtml(chanU.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    chanAvEl.style.background = 'none';
+  } else {
+    chanAvEl.textContent = (v.username||'?')[0].toUpperCase();
+    chanAvEl.style.background = catColor;
+  }
   document.getElementById('channel-name').textContent = v.username||'Anonymous';
   var chanVids = allVideos.filter(function(x){ return x.user_id===v.user_id; });
   document.getElementById('channel-meta').textContent = chanVids.length+' video'+(chanVids.length!==1?'s':'');
@@ -701,12 +732,16 @@ function toggleDesc() {
 async function loadComments(videoId) {
   var rows = await sbGet('pt_comments?video_id=eq.'+videoId+'&order=created_at.desc');
   var list = rows||[];
+  if (list.length) {
+    var cuids = list.map(function(c){return c.user_id;}).filter(Boolean);
+    cuids = cuids.filter(function(v,i,a){return a.indexOf(v)===i;});
+    await loadUserCache(cuids);
+  }
   document.getElementById('comments-heading').textContent = list.length+' Comment'+(list.length!==1?'s':'');
   if (!list.length) { document.getElementById('comments-list').innerHTML='<div class="no-comments">no comments yet — be the first!</div>'; return; }
   document.getElementById('comments-list').innerHTML = list.map(function(c){
-    var init=(c.username||'?')[0].toUpperCase();
     return '<div class="comment">'
-      +'<div class="comment-avatar-sm">'+escHtml(init)+'</div>'
+      +avatarHtml(c.user_id, c.username, 32, '')
       +'<div class="comment-body">'
       +'<div class="comment-header"><span class="comment-name">'+escHtml(c.username||'Anonymous')+'</span><span class="comment-time">'+fmtAgo(c.created_at)+'</span></div>'
       +'<div class="comment-text">'+escHtml(c.body)+'</div>'
