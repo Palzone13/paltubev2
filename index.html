@@ -178,6 +178,32 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
 .comment-body .comment-time { font-size: 11px; color: var(--text3); margin-left: 6px; font-weight: 400; }
 .comment-body .comment-text { font-size: 13px; color: var(--text2); line-height: 1.5; }
 
+/* ── FOLLOWING / INBOX ── */
+.inbox-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); margin-bottom:8px; cursor:pointer; transition:background .1s; }
+.inbox-item:hover { background:var(--surface2); }
+.inbox-item.unread { border-left:3px solid var(--orange); }
+.inbox-avatar { width:42px; height:42px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; color:#fff; flex-shrink:0; overflow:hidden; }
+.inbox-avatar img { width:100%;height:100%;object-fit:cover; }
+.inbox-body { flex:1; min-width:0; }
+.inbox-text { font-size:13px; color:var(--text); margin-bottom:2px; }
+.inbox-text b { color:var(--orange); }
+.inbox-time { font-size:11px; color:var(--text3); }
+.inbox-thumb { width:72px; aspect-ratio:16/9; border-radius:6px; background:var(--surface3); overflow:hidden; flex-shrink:0; }
+.inbox-thumb video, .inbox-thumb img { width:100%;height:100%;object-fit:cover; }
+.following-card { display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); margin-bottom:8px; }
+.following-card:hover { background:var(--surface2); }
+.following-card .fc-avatar { width:48px; height:48px; border-radius:50%; background:var(--orange); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:17px; color:#fff; flex-shrink:0; overflow:hidden; cursor:pointer; }
+.following-card .fc-avatar img { width:100%;height:100%;object-fit:cover; }
+.following-card .fc-info { flex:1; min-width:0; }
+.following-card .fc-name { font-size:14px; font-weight:600; cursor:pointer; }
+.following-card .fc-name:hover { color:var(--orange); }
+.following-card .fc-meta { font-size:12px; color:var(--text3); margin-top:2px; }
+.unfollow-btn { font-size:12px; padding:5px 14px; border-radius:20px; border:1px solid var(--border-med); background:transparent; color:var(--text2); cursor:pointer; font-family:inherit; flex-shrink:0; }
+.unfollow-btn:hover { background:var(--surface3); color:var(--text); }
+.nav-badge { background:var(--orange); color:#fff; font-size:10px; font-weight:700; border-radius:10px; padding:1px 6px; margin-left:auto; }
+.empty-msg { text-align:center; padding:48px 20px; color:var(--text3); font-size:13px; }
+.empty-msg svg { width:44px; height:44px; margin:0 auto 12px; display:block; opacity:.3; }
+
 /* sidebar queue */
 #watch-sidebar { display: flex; flex-direction: column; gap: 0; }
 #watch-sidebar h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text2); }
@@ -360,6 +386,14 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
         My Channel
       </div>
+      <div class="nav-item" id="nav-following" onclick="showFollowing()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        Following
+      </div>
+      <div class="nav-item" id="nav-inbox" onclick="showInbox()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        Inbox <span id="inbox-badge" class="nav-badge" style="display:none">0</span>
+      </div>
       <div class="nav-item" id="nav-admin" onclick="openAdmin()" style="display:none">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5z"/></svg>
         Admin <span id="admin-nav-badge" style="display:none" class="report-badge">!</span>
@@ -439,6 +473,21 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; }
         </div>
       </div>
       <div class="video-grid" id="channel-grid"></div>
+    </div>
+
+    <!-- FOLLOWING PAGE -->
+    <div class="page" id="page-following">
+      <div class="section-title">👥 Following <span id="following-count"></span></div>
+      <div id="following-list"></div>
+    </div>
+
+    <!-- INBOX PAGE -->
+    <div class="page" id="page-inbox">
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+        <span>📬 Inbox</span>
+        <button onclick="markAllRead()" style="font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border-med);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit">mark all read</button>
+      </div>
+      <div id="inbox-list"></div>
     </div>
 
     <!-- SEARCH PAGE -->
@@ -687,7 +736,7 @@ async function sbRpc(fn, params) {
 // ── SESSION ───────────────────────────────────────────────────────────────────
 function saveSession(u) { localStorage.setItem('pt_user', JSON.stringify(u)); currentUser = u; updateUserbar(); }
 function loadSession() { try { var s = localStorage.getItem('pt_user'); if(s){ currentUser=JSON.parse(s); updateUserbar(); } } catch(e){} }
-function logout() { localStorage.removeItem('pt_user'); currentUser=null; updateUserbar(); document.getElementById('nav-admin').style.display='none'; toast('logged out'); }
+function logout() { localStorage.removeItem('pt_user'); currentUser=null; updateUserbar(); document.getElementById('nav-admin').style.display='none'; document.getElementById('nav-following').style.display='none'; document.getElementById('nav-inbox').style.display='none'; toast('logged out'); }
 
 function updateUserbar() {
   if (currentUser) {
@@ -696,6 +745,9 @@ function updateUserbar() {
     el.style.display='flex'; el.style.alignItems='center'; el.style.gap='10px';
     var isAdmin = currentUser.username === 'Admin';
     document.getElementById('nav-admin').style.display = isAdmin ? '' : 'none';
+    document.getElementById('nav-following').style.display = '';
+    document.getElementById('nav-inbox').style.display = '';
+    loadInboxBadge();
     var pfpHtml = currentUser.pfp_url
       ? '<div class="avatar" onclick="showMyChannel()" style="background:none;overflow:hidden;padding:0"><img src="'+escHtml(currentUser.pfp_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"></div>'
       : '<div class="avatar" onclick="showMyChannel()">'+escHtml(currentUser.username[0].toUpperCase())+'</div>';
@@ -972,6 +1024,8 @@ async function submitUpload() {
   });
 
   allVideos.unshift(saved);
+  // notify followers
+  sendUploadNotifications(saved);
   selectedVideoFile = null;
   document.getElementById('up-title').value='';
   document.getElementById('up-desc').value='';
@@ -1284,6 +1338,176 @@ async function handlePfpSelect(file){
 var compactStyle=document.createElement('style');
 compactStyle.textContent='body.compact .video-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;}body.compact .video-card-info .title{font-size:12px;}';
 document.head.appendChild(compactStyle);
+
+// ── FOLLOWING ─────────────────────────────────────────────────────────────────
+var FOLLOWED_KEY = 'pt_followed';
+function getFollowed() { try{return JSON.parse(localStorage.getItem(FOLLOWED_KEY)||'[]');}catch(e){return[];} }
+function saveFollowed(arr) { localStorage.setItem(FOLLOWED_KEY, JSON.stringify(arr)); }
+
+async function showFollowing() {
+  if (!currentUser) { openAuth('login'); return; }
+  showPage('following');
+  document.getElementById('nav-following').classList.add('active');
+  var followed = getFollowed();
+  var listEl = document.getElementById('following-list');
+  document.getElementById('following-count').textContent = followed.length ? '('+followed.length+')' : '';
+  if (!followed.length) {
+    listEl.innerHTML = '<div class="empty-msg"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>you are not following anyone yet.<br>Visit a channel and hit Follow!</div>';
+    return;
+  }
+  listEl.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">loading...</div>';
+  var ids = followed.map(Number).filter(Boolean);
+  var rows = await sbGet('users?id=in.('+ids.join(',')+')'+'&select=id,username,pfp_url');
+  if (!rows || !rows.length) { listEl.innerHTML = '<div class="empty-msg">could not load following list.</div>'; return; }
+  // get video counts
+  var vcRows = await sbGet('pt_videos?user_id=in.('+ids.join(',')+')'+'&select=user_id');
+  var vcMap = {};
+  (vcRows||[]).forEach(function(v){ vcMap[v.user_id]=(vcMap[v.user_id]||0)+1; });
+  listEl.innerHTML = '';
+  rows.forEach(function(u){
+    var card = document.createElement('div');
+    card.className = 'following-card';
+    var av = document.createElement('div');
+    av.className = 'fc-avatar';
+    av.onclick = function(){ window.location.href='paltube-user.html?u='+u.id; };
+    if (u.pfp_url) { var img=document.createElement('img'); img.src=u.pfp_url; av.appendChild(img); }
+    else av.textContent = u.username[0].toUpperCase();
+    var info = document.createElement('div'); info.className='fc-info';
+    var name = document.createElement('div'); name.className='fc-name'; name.textContent=u.username;
+    name.onclick = function(){ window.location.href='paltube-user.html?u='+u.id; };
+    var meta = document.createElement('div'); meta.className='fc-meta'; meta.textContent=(vcMap[u.id]||0)+' video'+((vcMap[u.id]||0)!==1?'s':'');
+    info.appendChild(name); info.appendChild(meta);
+    var ubtn = document.createElement('button'); ubtn.className='unfollow-btn'; ubtn.textContent='Unfollow';
+    ubtn.onclick = function(){ unfollowUser(u.id, u.username, ubtn); };
+    card.appendChild(av); card.appendChild(info); card.appendChild(ubtn);
+    listEl.appendChild(card);
+  });
+}
+
+async function unfollowUser(uid, username, btn) {
+  var followed = getFollowed().filter(function(id){ return String(id)!==String(uid); });
+  saveFollowed(followed);
+  // remove from pt_follows
+  if (currentUser) {
+    try { await sbDelete('pt_follows','follower_id=eq.'+currentUser.id+'&following_id=eq.'+uid); } catch(e){}
+  }
+  btn.closest('.following-card').remove();
+  var remaining = document.querySelectorAll('.following-card').length;
+  document.getElementById('following-count').textContent = remaining ? '('+remaining+')' : '';
+  if (!remaining) showFollowing();
+  toast('unfollowed '+username);
+}
+
+// ── INBOX ──────────────────────────────────────────────────────────────────────
+var INBOX_READ_KEY = 'pt_inbox_read';
+function getReadIds() { try{return JSON.parse(localStorage.getItem(INBOX_READ_KEY)||'[]');}catch(e){return[];} }
+
+async function loadInboxBadge() {
+  if (!currentUser) return;
+  var rows = await sbGet('pt_notifications?recipient_id=eq.'+currentUser.id+'&order=created_at.desc&limit=50&select=id');
+  if (!rows || !rows.length) return;
+  var readIds = getReadIds();
+  var unread = rows.filter(function(r){ return readIds.indexOf(r.id)===-1; }).length;
+  var badge = document.getElementById('inbox-badge');
+  if (unread > 0) { badge.textContent = unread > 9 ? '9+' : unread; badge.style.display=''; }
+  else badge.style.display='none';
+}
+
+async function showInbox() {
+  if (!currentUser) { openAuth('login'); return; }
+  showPage('inbox');
+  document.getElementById('nav-inbox').classList.add('active');
+  var listEl = document.getElementById('inbox-list');
+  listEl.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">loading...</div>';
+  var rows = await sbGet('pt_notifications?recipient_id=eq.'+currentUser.id+'&order=created_at.desc&limit=50');
+  if (!rows || !rows.length) {
+    listEl.innerHTML = '<div class="empty-msg"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>your inbox is empty.<br>Follow channels to get notified when they upload!</div>';
+    return;
+  }
+  // load actor pfps
+  var actorIds = rows.map(function(r){return r.actor_id;}).filter(Boolean);
+  actorIds = actorIds.filter(function(v,i,a){return a.indexOf(v)===i;});
+  await loadUserCache(actorIds);
+  var readIds = getReadIds();
+  // mark all as read
+  var allIds = rows.map(function(r){return r.id;});
+  var newRead = readIds.concat(allIds.filter(function(id){return readIds.indexOf(id)===-1;}));
+  localStorage.setItem(INBOX_READ_KEY, JSON.stringify(newRead));
+  document.getElementById('inbox-badge').style.display='none';
+
+  document.getElementById('inbox-list').innerHTML = '';
+  rows.forEach(function(r){
+    var isUnread = readIds.indexOf(r.id)===-1;
+    var u = userCache[r.actor_id];
+    var pfp = u && u.pfp_url;
+    var item = document.createElement('div');
+    item.className = 'inbox-item' + (isUnread ? ' unread' : '');
+    if (r.video_id) item.onclick = function(){ window.location.href='paltube-watch.html?v='+r.video_id; };
+    var av = document.createElement('div'); av.className='inbox-avatar';
+    if (pfp) { var img=document.createElement('img'); img.src=pfp; av.appendChild(img); }
+    else av.textContent = (r.actor_username||'?')[0].toUpperCase();
+    var body = document.createElement('div'); body.className='inbox-body';
+    var txt = document.createElement('div'); txt.className='inbox-text';
+    txt.innerHTML = '<b>'+escHtml(r.actor_username||'someone')+'</b> uploaded a new video: '+escHtml(r.video_title||'untitled');
+    var time = document.createElement('div'); time.className='inbox-time'; time.textContent=fmtAgo(r.created_at);
+    body.appendChild(txt); body.appendChild(time);
+    item.appendChild(av); item.appendChild(body);
+    if (r.video_id) {
+      var vid = allVideos.find(function(v){return v.id===r.video_id;});
+      if (vid && (vid.thumbnail_url||vid.video_url)) {
+        var th = document.createElement('div'); th.className='inbox-thumb';
+        if (vid.thumbnail_url) { var ti=document.createElement('img'); ti.src=vid.thumbnail_url; ti.loading='lazy'; th.appendChild(ti); }
+        else { var tv=document.createElement('video'); tv.src=vid.video_url+'#t=1'; tv.preload='metadata'; tv.muted=true; th.appendChild(tv); }
+        item.appendChild(th);
+      }
+    }
+    document.getElementById('inbox-list').appendChild(item);
+  });
+}
+
+function markAllRead() {
+  var items = document.querySelectorAll('.inbox-item.unread');
+  items.forEach(function(el){ el.classList.remove('unread'); });
+  document.getElementById('inbox-badge').style.display='none';
+}
+
+async function sendUploadNotifications(video) {
+  if (!currentUser || !video || !video.id) return;
+  // find all users who follow currentUser (stored locally — we check all users' localStorage via server)
+  // Instead: query users who have this user_id in their followed list isn't possible client-side
+  // So we store followers server-side when they follow. 
+  // For now, send to anyone who has followed this channel (we track via pt_notifications insert on follow)
+  // Simpler: just insert notification — recipient_id is determined by who checks inbox
+  // We need a follows table ideally, but we'll use localStorage follows list on the uploader side
+  // The workaround: on upload, fetch all users and cross-check is too heavy.
+  // Best approach with current schema: insert notification rows for all followers we know about
+  // Since follows are stored in localStorage, we can only notify from the perspective of the follower
+  // checking inbox. So instead we flip: store follow events in supabase.
+  // For now insert a broadcast notification with recipient_id = null and filter client-side.
+  // Actually cleanest: insert one notification row, recipient scoped by who followed actor_id.
+  // We'll do this properly by adding a pt_follows table query.
+  try {
+    // Get all users who follow currentUser from pt_follows (we'll check if table exists)
+    var followers = await sbGet('pt_follows?following_id=eq.'+currentUser.id+'&select=follower_id');
+    if (!followers || !followers.length) return;
+    var notifRows = followers.map(function(f){
+      return {
+        recipient_id: f.follower_id,
+        actor_id: currentUser.id,
+        actor_username: currentUser.username,
+        video_id: video.id,
+        video_title: video.title,
+        type: 'new_video'
+      };
+    });
+    // batch insert
+    await fetch(SUPABASE_URL+'/rest/v1/pt_notifications', {
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify(notifRows)
+    });
+  } catch(e){ console.log('notif error', e); }
+}
 
 loadSession();
 if(localStorage.getItem('pt_compact')==='1') document.body.classList.add('compact');
