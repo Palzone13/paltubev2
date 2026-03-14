@@ -972,7 +972,11 @@ function showPage(name) {
     document.getElementById('nav-shorts').classList.add('active');
     return;
   } else {
-    if (shortsEl) shortsEl.style.display = 'none';
+    if (shortsEl) {
+      shortsEl.style.display = 'none';
+      // pause all playing shorts
+      shortsEl.querySelectorAll('video.short-video').forEach(function(v){ v.pause(); });
+    }
   }
 
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
@@ -1479,6 +1483,8 @@ function handleThumbSelect(file) {
 
 // ── SHORTS ────────────────────────────────────────────────────────────────────
 var shortsLoaded = false;
+var shortsObserver = null;
+
 function loadShorts() {
   if (shortsLoaded) return;
   shortsLoaded = true;
@@ -1489,24 +1495,90 @@ function loadShorts() {
     return;
   }
   feed.innerHTML = '';
+
+  // disconnect any previous observer
+  if (shortsObserver) shortsObserver.disconnect();
+
+  // IntersectionObserver: play video when ≥80% visible, pause all others
+  shortsObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      var vid = entry.target.querySelector('video.short-video');
+      if (!vid) return;
+      if (entry.intersectionRatio >= 0.8) {
+        vid.currentTime = 0;
+        vid.play().catch(function(){});
+        // unmute on first interaction if user has interacted
+        if (shortsUserInteracted) vid.muted = false;
+      } else {
+        vid.pause();
+      }
+    });
+  }, { threshold: 0.8 });
+
   shorts.forEach(function(v){
     var card = document.createElement('div'); card.className='short-card';
     var inner = document.createElement('div'); inner.className='short-inner';
-    inner.onclick = function(){ addToHistory(v.id); window.location.href='paltube-watch.html?v='+v.id; };
-    var media = v.thumbnail_url
-      ? Object.assign(document.createElement('img'),{src:v.thumbnail_url,loading:'lazy'})
-      : Object.assign(document.createElement('video'),{src:v.video_url+'#t=1',preload:'metadata',muted:true});
+
+    // always use a real video element for autoplay
+    var vid = document.createElement('video');
+    vid.className = 'short-video';
+    vid.src = v.video_url;
+    vid.loop = true;
+    vid.muted = true; // must start muted for autoplay to work
+    vid.playsinline = true;
+    vid.preload = 'metadata';
+    vid.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+
+    // tap to mute/unmute
+    var muted = true;
+    var muteBtn = document.createElement('div');
+    muteBtn.style.cssText = 'position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;font-size:16px;';
+    muteBtn.textContent = '🔇';
+    muteBtn.onclick = function(e){
+      e.stopPropagation();
+      muted = !muted;
+      vid.muted = muted;
+      muteBtn.textContent = muted ? '🔇' : '🔊';
+      shortsUserInteracted = true;
+    };
+
+    // tap video to pause/play
+    var paused = false;
+    var pauseIcon = document.createElement('div');
+    pauseIcon.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;pointer-events:none;';
+    pauseIcon.innerHTML = '<svg viewBox="0 0 24 24" width="64" height="64"><circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.45)"/><rect x="8" y="7" width="3" height="10" fill="white" rx="1"/><rect x="13" y="7" width="3" height="10" fill="white" rx="1"/></svg>';
+    inner.onclick = function(){
+      if (paused) { vid.play(); paused=false; pauseIcon.style.opacity='0'; }
+      else { vid.pause(); paused=true; pauseIcon.style.opacity='1'; }
+    };
+
     var badge = document.createElement('span'); badge.className='short-badge'; badge.textContent='SHORT';
-    var playOvr = document.createElement('div'); playOvr.className='short-play-overlay';
-    playOvr.innerHTML='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="rgba(255,255,255,0.25)"/><polygon points="10,8 18,12 10,16" fill="white"/></svg>';
+
     var overlay = document.createElement('div'); overlay.className='short-overlay';
-    overlay.innerHTML='<div class="short-title">'+escHtml(v.title)+'</div>'
+    overlay.style.pointerEvents = 'none';
+    overlay.innerHTML = '<div class="short-title">'+escHtml(v.title)+'</div>'
       +'<div class="short-meta">'+escHtml(v.username||'')+' &bull; '+fmtNum(v.views||0)+' views</div>';
-    inner.appendChild(media); inner.appendChild(badge); inner.appendChild(playOvr); inner.appendChild(overlay);
+
+    // open full watch page on title click
+    var titleLink = document.createElement('div');
+    titleLink.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:70px;z-index:3;cursor:pointer;';
+    titleLink.onclick = function(e){ e.stopPropagation(); addToHistory(v.id); window.location.href='paltube-watch.html?v='+v.id; };
+
+    inner.appendChild(vid);
+    inner.appendChild(badge);
+    inner.appendChild(muteBtn);
+    inner.appendChild(pauseIcon);
+    inner.appendChild(overlay);
+    inner.appendChild(titleLink);
     card.appendChild(inner);
     feed.appendChild(card);
+
+    shortsObserver.observe(card);
   });
 }
+
+var shortsUserInteracted = false;
+document.addEventListener('click', function(){ shortsUserInteracted = true; }, {once:true});
 
 // ── WATCH HISTORY ─────────────────────────────────────────────────────────────
 var HIST_KEY = 'pt_hist';
