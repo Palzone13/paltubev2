@@ -1552,6 +1552,17 @@ function loadShorts() {
       else { vid.pause(); paused=true; pauseIcon.style.opacity='1'; }
     };
 
+    // like button
+    var likeBtn = document.createElement('div');
+    likeBtn.style.cssText = 'position:absolute;right:12px;bottom:90px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;z-index:4;';
+    var likeCount = likedVideos[v.id] ? (v.likes||0) : (v.likes||0);
+    likeBtn.innerHTML = '<div style="width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .15s" id="short-like-icon-'+v.id+'">'+(likedVideos[v.id]?'❤️':'🤍')+'</div>'
+      +'<span style="color:#fff;font-size:12px;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.7)" id="short-like-count-'+v.id+'">'+fmtNum(likeCount)+'</span>';
+    likeBtn.onclick = function(e){
+      e.stopPropagation();
+      toggleShortLike(v);
+    };
+
     var badge = document.createElement('span'); badge.className='short-badge'; badge.textContent='SHORT';
 
     var overlay = document.createElement('div'); overlay.className='short-overlay';
@@ -1568,6 +1579,7 @@ function loadShorts() {
     inner.appendChild(badge);
     inner.appendChild(muteBtn);
     inner.appendChild(pauseIcon);
+    inner.appendChild(likeBtn);
     inner.appendChild(overlay);
     inner.appendChild(titleLink);
     card.appendChild(inner);
@@ -1579,6 +1591,33 @@ function loadShorts() {
 
 var shortsUserInteracted = false;
 document.addEventListener('click', function(){ shortsUserInteracted = true; }, {once:true});
+
+async function toggleShortLike(v) {
+  var id = v.id;
+  var liked = likedVideos[id];
+  var iconEl = document.getElementById('short-like-icon-'+id);
+  var countEl = document.getElementById('short-like-count-'+id);
+  if (liked) {
+    await sbDelete('pt_likes','video_id=eq.'+id+'&session_id=eq.'+SESSION_ID);
+    v.likes = Math.max(0,(v.likes||0)-1);
+    await sbPatch('pt_videos', id, {likes: v.likes});
+    likedVideos[id] = false;
+  } else {
+    try { await sbPost('pt_likes',{video_id:id,session_id:SESSION_ID}); } catch(e){}
+    v.likes = (v.likes||0)+1;
+    await sbPatch('pt_videos', id, {likes: v.likes});
+    likedVideos[id] = true;
+  }
+  if (iconEl) {
+    iconEl.textContent = likedVideos[id] ? '❤️' : '🤍';
+    iconEl.style.transform = 'scale(1.3)';
+    setTimeout(function(){ iconEl.style.transform='scale(1)'; }, 200);
+  }
+  if (countEl) countEl.textContent = fmtNum(v.likes);
+  // sync allVideos
+  var av = allVideos.find(function(x){ return x.id===id; });
+  if (av) av.likes = v.likes;
+}
 
 // ── WATCH HISTORY ─────────────────────────────────────────────────────────────
 var HIST_KEY = 'pt_hist';
