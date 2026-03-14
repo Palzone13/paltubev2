@@ -1110,13 +1110,25 @@ async function submitUpload() {
 
   var ext = selectedVideoFile.name.split('.').pop().toLowerCase();
   var filename = Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
-  var r = await fetch(SUPABASE_URL+'/storage/v1/object/paltube/'+filename, {
-    method: 'POST',
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY, 'Content-Type': selectedVideoFile.type, 'x-upsert':'true' },
-    body: selectedVideoFile
-  });
+  var r;
+  try {
+    r = await fetch(SUPABASE_URL+'/storage/v1/object/paltube/'+filename, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY, 'Content-Type': selectedVideoFile.type, 'x-upsert':'true' },
+      body: selectedVideoFile
+    });
+  } catch(fetchErr) {
+    prog.classList.remove('show');
+    err.textContent='upload failed: '+fetchErr.message; err.classList.add('show');
+    btn.disabled=false; btn.textContent='publish video'; return;
+  }
   prog.classList.remove('show');
-  if (!r.ok) { err.textContent='upload failed. try again.'; err.classList.add('show'); btn.disabled=false; btn.textContent='publish video'; return; }
+  if (!r.ok) {
+    var errBody = await r.json().catch(function(){return{};});
+    var msg = (errBody && errBody.message) || (errBody && errBody.error) || r.status;
+    err.textContent='upload failed: '+msg; err.classList.add('show');
+    btn.disabled=false; btn.textContent='publish video'; return;
+  }
 
   var videoUrl = STORAGE_URL+filename;
 
